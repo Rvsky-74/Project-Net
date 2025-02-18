@@ -13,7 +13,9 @@ const firebaseConfig = {
   appId: "FIREBASE_APP_ID_PLACEHOLDER"
 };
 
-console.log(1);
+console.log("FIREBASE_API_KEY_PLACEHOLDER");
+console.log("FIREBASE_PROJECT_ID_PLACEHOLDER");
+
 const app = initializeApp(firebaseConfig);
 
 const db = getFirestore(app);
