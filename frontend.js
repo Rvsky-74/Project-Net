@@ -36,3 +36,5 @@ async function writeToFirestore() {
     console.error("Error writing document: ", error);
   }
 }
+
+window.writeToFirestore = writeToFirestore;
