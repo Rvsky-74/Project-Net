@@ -13,6 +13,7 @@ const firebaseConfig = {
   appId: "FIREBASE_APP_ID_PLACEHOLDER"
 };
 
+console.log(1);
 const app = initializeApp(firebaseConfig);
 
 const db = getFirestore(app);
