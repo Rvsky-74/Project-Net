@@ -2,6 +2,12 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/11.3.1/firebas
 import { getFirestore, collection, doc, setDoc } from "https://www.gstatic.com/firebasejs/11.3.1/firebase-firestore.js";
 
 
+console.log(secrets.FIREBASE_API_KEY);
+console.log(secrets.FIREBASE_AUTH_DOMAIN);
+console.log(secrets.FIREBASE_PROJECT_ID);
+console.log(secrets.FIREBASE_STORAGE_BUCKET);
+console.log(secrets.FIREBASE_MESSAGING_SENDER_ID);
+console.log(secrets.FIREBASE_APP_ID);
 
 // Initialize Firebase (Make sure Firebase is initialized before using functions)
 const firebaseConfig = {
