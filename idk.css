@@ -1,0 +1,354 @@
+body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+}
+
+/************************* Canvas Elements *************************/
+.canvas-default {
+    border: 2px solid black;
+    background-color: rgba(212, 255, 255, 0.567);
+}
+.canvas-alt {
+    border: 1px solid black;
+    background-color: rgba(194, 249, 249, 0.567);
+}
+
+
+.canvas-title {
+    text-align: center;
+    margin-bottom: 1px;
+}
+
+.canvas-container {
+    position: relative; /* Ensures children are positioned relative to this */
+    display: inline-block; /* Makes the container fit the canvas size */
+
+    border: none;
+    clip-path: inset(0px 0px 4px 0px); /*necessary for the clip box to be correctly aligned*/
+    overflow: hidden; /* Ensures content outside gets clipped */
+}
+
+
+.center {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+
+    width: 30px;
+    aspect-ratio: 1;
+
+
+    background-color: black;
+}
+.test-button {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+
+    width: 30px;
+    aspect-ratio: 1;
+    border-radius: 5px;
+
+    border: none;
+    outline: solid;
+    outline-color: rgba(200, 200, 200, 1);
+}
+.test-button .icon {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 30px;
+    height: 30px;
+
+    background-color: #777;
+    mask-image: url(trash.svg);
+    mask-repeat: no-repeat;
+    mask-size: 28px;
+    mask-position: 60%;
+}
+/*****************************************************************************/
+
+
+
+
+
+/************************* Side Menu Elements *************************/
+.menu-button {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center; /* Centers bars horizontally */
+    justify-content: center; /* Centers the bars vertically */
+    gap: 4px; /* Adjusts the spacing between bars */
+
+    background-color: #cccb;
+
+    position: absolute;
+    top: 0px;
+    right: 0px;
+    width: 40px;
+    height: 40px;
+    border-radius: 5px; /* Rounds the corners */
+
+    margin-right: 5px;
+    margin-top: 5px;
+
+    border: none;      /* Removes default border */
+    outline: none;     /* Removes focus outline */
+
+    cursor: pointer;
+
+    z-index: 2;
+}
+    .menu-button div {
+        width: 100%;
+        height: 5px;
+        background-color: #777a;
+        border-radius: 3px;
+    }
+    .menu-button:hover{
+        outline: solid;
+        outline-color: black;
+        outline-width: 2px;
+    }
+
+.menu-dropdown {
+    position: absolute;
+    right: 0px;
+    top: 0px;
+    margin-top: 5px;
+    margin-right: 5px;
+
+    background-color: rgba(200, 200, 200, 1);
+    width:40px;
+    height:100px;
+    border-radius: 5px;
+
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    align-items: center;
+
+    padding-top: 5px;
+
+    z-index: 1;
+}
+    @keyframes appear {
+        from {
+            opacity: 0;
+            transform: translateY(0px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(45px);
+        }
+    }
+    @keyframes disappear {
+        from {
+            opacity: 1;
+            transform: translateY(45px);
+        }
+        to {
+            opacity: 0;
+            transform: translateY(0px);
+        }
+    }
+    .menu-dropdown.animate {
+        animation: appear 0.5s ease forwards;
+    }
+    .menu-dropdown.reverse {
+        animation: disappear 0.5s ease forwards;
+    }
+
+    .menu-dropdown .add-node {
+        position: relative;
+        width: 30px;
+        height: 30px;
+
+        cursor: pointer;
+
+        outline: none;
+        border: none;
+
+        border-radius: 5px; /* Rounds the corners */
+
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+        .add-node .bar {
+            width: 20%; /* Adjust width for a vertical bar */
+            height: 80%; /* Full height of the button */
+            background-color: #777;
+            border-radius: 3px;
+            position: absolute;
+
+        }
+
+    .menu-dropdown .delete {
+        position: relative;
+        width: 30px;
+        height: 30px;
+
+        cursor: pointer;
+
+        outline: none;
+        border: none;
+
+        border-radius: 5px; /* Rounds the corners */
+    }
+        .delete .icon {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 30px;
+            height: 30px;
+        
+            background-color: #777;
+            mask-image: url(trash.svg);
+            mask-repeat: no-repeat;
+            mask-size: 28px;
+            mask-position: 60%;
+        }
+
+    .menu-dropdown > *:hover {
+        outline: solid;
+        outline-color: black;
+        outline-width: 2px;
+    }
+/*****************************************************************************/
+
+
+
+
+
+/************************* Toggle button Elements *************************/
+.rounded-square-btn {
+    width: 30px;          
+    height: 15px;         
+    border-radius: 15px;   /* Rounded corners */
+    border: none;
+    cursor: pointer;
+    background: white;
+    outline-width: 5px;
+    outline-style: solid;
+    display: flex;
+    align-items: center;
+    padding: 2px;
+    position: relative;
+}
+.small-circle {
+    width: 12px;
+    height: 12px;
+    y: 2px;
+    border-radius: 50%;
+    position: absolute;
+    left: 3px; /* Start position */
+    transition: left 0.3s ease;
+}
+.rounded-square-btn.active .small-circle {
+    left: 15px; /* Move to the right */
+}
+/*****************************************************************************/
+
+
+
+/**************************** Options Box Elements ****************************/
+.box {
+    position: absolute;
+    border-radius: 8px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+
+    height: auto;
+    min-height: fit-content;
+}
+
+.button-text-wrapper {
+    display: flex;
+    align-items: center; /* Vertically align text and button */
+    gap: 10px; /* Space between text and button */
+}
+/*********************************************************************/
+
+
+
+
+
+/**************************** Nodes ****************************/
+.node {
+    --out-color: 50,0,100;
+    --in-color: 122,102,162;
+    --diameter: 21px;
+
+    width: var(--diameter);
+    aspect-ratio: 1;
+    border-radius: 50%;
+    position: absolute;
+
+    background-color: rgba(var(--in-color), var(--alpha, 1));
+    
+    outline: solid;
+    outline-width: 3px;
+    outline-color: rgba(var(--out-color), var(--alpha, 1));
+
+    transform: translate(-50%, -50%);
+    transition: width 0.3s ease; /* In order to make size increases smooth, while keeping everything else responsive */
+}
+.node .text {
+    --size: 14px;
+    width: 100px;
+    position: absolute;
+    color: black;  /* Text color */
+    font-size: var(--size); /* Adjust as needed */
+    text-align: center;
+    top: calc(var(--diameter) / 2 + var(--size)); /* Places text right below the node */
+    left: 50%;
+    transform: translateX(-50%);
+}
+/*********************************************************************/
+
+
+
+
+
+/**************************** Connections Elements ****************************/
+.arrow {
+    position: absolute;
+    --alpha: 1;
+    --cor: 50, 0, 100;
+    top: 0px;
+    left: 0px;
+}
+.arrow .tip {
+    --rotation: 0deg;
+    --border-thickness: 3px;
+    top: 0px;
+    left: 0px;
+    width: 5px;
+    height: 5px;
+    border-top: var(--border-thickness) solid black;
+    border-right: var(--border-thickness) solid black;
+    border-color: rgba(var(--cor), var(--alpha));
+
+    position: absolute;
+    
+}
+.arrow .line {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    height: 2px; /* Line thickness */
+    transform-origin: left; 
+    background-color: rgba(var(--cor), var(--alpha));
+} 
+/*********************************************************************/
