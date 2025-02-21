@@ -356,6 +356,8 @@ canvas.addEventListener('mousedown', function(event) {
 
 
 let previously_inside = false;
+let x = 0;
+let y = 0;
 canvas.addEventListener('mousemove', function(event) {
     const rect = canvas.getBoundingClientRect();
 

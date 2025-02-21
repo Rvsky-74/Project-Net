@@ -2,25 +2,25 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/11.3.1/firebas
 import { getFirestore, collection, doc, setDoc } from "https://www.gstatic.com/firebasejs/11.3.1/firebase-firestore.js";
 
 
-console.log(secrets.FIREBASE_API_KEY);
-console.log(secrets.FIREBASE_AUTH_DOMAIN);
-console.log(secrets.FIREBASE_PROJECT_ID);
-console.log(secrets.FIREBASE_STORAGE_BUCKET);
-console.log(secrets.FIREBASE_MESSAGING_SENDER_ID);
-console.log(secrets.FIREBASE_APP_ID);
-
 // Initialize Firebase (Make sure Firebase is initialized before using functions)
-const firebaseConfig = {
-  apiKey: "FIREBASE_API_KEY_PLACEHOLDER",
-  authDomain: "FIREBASE_AUTH_DOMAIN_PLACEHOLDER",
-  projectId: "FIREBASE_PROJECT_ID_PLACEHOLDER",
-  storageBucket: "FIREBASE_STORAGE_BUCKET_PLACEHOLDER",
-  messagingSenderId: "FIREBASE_MESSAGING_SENDER_ID_PLACEHOLDER",
-  appId: "FIREBASE_APP_ID_PLACEHOLDER"
-};
+// const firebaseConfig = {
+//   apiKey: "FIREBASE_API_KEY_PLACEHOLDER",
+//   authDomain: "FIREBASE_AUTH_DOMAIN_PLACEHOLDER",
+//   projectId: "FIREBASE_PROJECT_ID_PLACEHOLDER",
+//   storageBucket: "FIREBASE_STORAGE_BUCKET_PLACEHOLDER",
+//   messagingSenderId: "FIREBASE_MESSAGING_SENDER_ID_PLACEHOLDER",
+//   appId: "FIREBASE_APP_ID_PLACEHOLDER"
+// };
 
-console.log("FIREBASE_API_KEY_PLACEHOLDER");
-console.log("FIREBASE_PROJECT_ID_PLACEHOLDER");
+
+const firebaseConfig = {
+  apiKey: import.meta.env.VITE_API_KEY,
+  authDomain: import.meta.env.VITE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_APP_ID,
+};
 
 const app = initializeApp(firebaseConfig);
 
@@ -34,8 +34,8 @@ async function writeToFirestore() {
 
     // Set data in Firestore (this will overwrite the document if it already exists)
     await setDoc(docRef, {
-      firstName: "John",
-      lastName: "Doe",
+      firstName: "Don",
+      lastName: "Joe",
       email: "john.doe@example.com",
       age: 30,
     });

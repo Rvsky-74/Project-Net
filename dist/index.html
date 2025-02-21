@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Projeto</title>
+    <link rel="stylesheet" href="/js_project/idk.css">
+  <script type="module" crossorigin src="/js_project/assets/index-to2GtWMd.js"></script>
+</head>
+<!-- nome do projeto no firebase task-manager-82b19 -->
+<body>  
+    <h1 class="canvas-title" id="Canvas_Text">
+        Project Visualizer
+    </h1>
+    
+    <div class="canvas-container" id="canvas-container">
+        <canvas id="circleCanvas" class="canvas-default" width="500" height="500"></canvas>
+        <button class="menu-button" onclick="menu()">
+            <div></div>
+            <div></div>
+            <div></div>
+        </button>
+        <!-- <div class="center"></div> -->
+    </div>    
+
+    <br>
+
+    <div class="button-container">
+        <button onclick="print_nodes()">debug</button>
+        <button onclick="setup_nodes()">predefined</button>
+        <button onclick="toggle_physics()" id="play">start</button>
+    </div>
+
+    <br>
+
+    <button id="googleSignInBtn" onclick="writeToFirestore()">testes</button>
+
+
+    <script src="/js_project/extras.js"></script>
+    <script src="/js_project/main_script.js"></script>
+
+</body>
