@@ -293,15 +293,21 @@ function menu(){
     menu_dropdown.appendChild(add_node_button);
 
     const delete_button = document.createElement("button");
-    delete_button.className = "delete";
+    delete_button.className = "base";
     menu_dropdown.appendChild(delete_button);
 
     const delete_icon = document.createElement("div");
     delete_icon.className = "icon";
+    delete_icon.style.maskImage = "url(trash.svg)";
     delete_button.appendChild(delete_icon);
 
+    const save_button = document.createElement("button");
+    save_button.className = "base";
+    save_button.id = "savebutton";
+    menu_dropdown.appendChild(save_button);
 
-    const button_amount = 2;
+
+    const button_amount = 3;
     const button_height = 30;
     const gaps = 5; //space between buttons and padding between buttons and the border of the menu
     const dropdown_height = button_amount*button_height + (button_amount-1)*gaps + gaps; //the extra gap is for the bottom (the top is acounted for with the padding-top)
@@ -309,7 +315,7 @@ function menu(){
     menu_dropdown.style.height = `${dropdown_height}px`;
 
 
-    add_menu_functions(add_node_button, delete_button);
+    add_menu_functions(add_node_button, delete_button, save_button);
     
     
 

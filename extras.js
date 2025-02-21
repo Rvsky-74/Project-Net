@@ -188,7 +188,7 @@ function start_dragging(x, y){
 
 // Variable to store the entered text
 let enteredText = "";
-function add_menu_functions(add_node_button, delete_button){
+function add_menu_functions(add_node_button, delete_button, save_button){
     //Style the add_node button
     const vbar = document.createElement("div");
     vbar.className = "bar";
@@ -200,7 +200,7 @@ function add_menu_functions(add_node_button, delete_button){
 
 
     // Add help when hovering a button
-    const button_list = [add_node_button, delete_button];
+    const button_list = [add_node_button, delete_button, save_button];
     button_list.forEach(element => {
         element.addEventListener("mouseenter", () => {
             timeout = setTimeout(() => {
@@ -210,7 +210,8 @@ function add_menu_functions(add_node_button, delete_button){
 
                 // Change text as needed
                 tooltip.textContent = (element.className == "add-node") ? 
-                        "New Task":
+                        "New Task": (element.id == "savebutton") ?
+                        "Save current project":
                         "Delete everything"; 
                 
                 // Positioning the tooltip to the left of the element
@@ -288,6 +289,10 @@ function add_menu_functions(add_node_button, delete_button){
         document.querySelectorAll(".node").forEach(element => element.remove());
         document.querySelectorAll(".arrow").forEach(element => element.remove());
         nodes.length = 0;
+    });
+
+    save_button.addEventListener("click", () => {
+        save();
     });
 }
 
