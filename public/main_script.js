@@ -1,4 +1,7 @@
 const canvas = document.getElementById('circleCanvas');
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
 const ctx = canvas.getContext('2d');
 const container = document.getElementById("canvas-container");
 const nodes = [];
@@ -39,12 +42,14 @@ draw_bkg();
 
 
 /* TODO Coisas gráficas
-aumentar e centrar canvas
-aumentar circulo do nodo destacado
+imagens para os botoes de load e save
+melhorar texto de ajuda (meter uma caixa de fundo)
 */
 
 /* TODO Funcionalidades
-melhor interface de adicionar pontos
+sair do mode de conexoes funcionar por clicar fora em vez de botao de sair
+fazer com que nao possa haver 2 nodos com o mesmo nome
+scroll to zoom (quando a visão está afastada nao mostrar o texto)
 */
 
 
@@ -65,6 +70,12 @@ function add_node(x=null, y=null, name=null){
                 - Cor que começa como roxa e vai mudar dependendo do estado do nodo
 ***********************************************************************************************************************************/
 
+    //check if name already exists, if so place a number in front
+    while (!is_name_available(name)){
+        name += '+';
+    }
+
+
     const node = document.createElement("div");
     node.className = "node";
     node.style.left = (x!=null) ? x + "px" : Math.random()*canvas.width + "px";
@@ -79,7 +90,6 @@ function add_node(x=null, y=null, name=null){
     node.y = parseInt(node.style.top, 10);
 
     container.appendChild(node);
-
     nodes.push(node); 
 
     add_highlight_function(node);
@@ -93,11 +103,36 @@ function add_node(x=null, y=null, name=null){
     if (!simulating) toggle_physics();
 }
 
+function createNode(name, x, y, state){
+    const node = document.createElement("div");
+    node.className = "node";
+
+    node.x = x;
+    node.y = y;
+    node.name = name;
+    node.state = state;
+    node.connections = [];
+
+    node.movimento = [0,0];
+
+    node.style.top = y + 'px';
+    node.style.left = x + 'px';
+
+    container.appendChild(node);
+    nodes.push(node); 
+
+    add_highlight_function(node);
+    add_onClick_function(node);
+
+    const text = document.createElement("div");
+    text.className = "text";
+    text.textContent = name;
+    node.appendChild(text);
+}
 
 
 
-
-function draw_bkg(x_ofset = 0, y_ofset = 0){
+function draw_bkg(x_ofset = 0, y_ofset = 0){    
 /**********************************************************************************************************************************
     Recebe:
             x_ofset, y_ofset -> Deslocamentos no plano para redesenhar o grid
@@ -119,7 +154,7 @@ function draw_bkg(x_ofset = 0, y_ofset = 0){
         ctx.stroke();
     }
     if (!link_mode_on){
-        const step = 15;
+        const step = 20;
         let x_off = x_ofset + bkg_x_off;
         let y_off = y_ofset + bkg_y_off;
         while (x_off > step/2) x_off -= step;
@@ -292,24 +327,38 @@ function menu(){
     add_node_button.className = "add-node";
     menu_dropdown.appendChild(add_node_button);
 
-    const delete_button = document.createElement("button");
-    delete_button.className = "delete";
-    menu_dropdown.appendChild(delete_button);
 
+
+    const save_button = document.createElement("button");
+    save_button.className = "base";
+    save_button.id = "savebutton";
+    save_button.innerText = "save";
+    menu_dropdown.appendChild(save_button);
+
+    const load_button = document.createElement("button");
+    load_button.className = "base";
+    load_button.id = "loadbutton";
+    load_button.innerText = "load";
+    menu_dropdown.appendChild(load_button);
+
+    const delete_button = document.createElement("button");
+    delete_button.className = "base";
+    menu_dropdown.appendChild(delete_button);
     const delete_icon = document.createElement("div");
     delete_icon.className = "icon";
+    delete_icon.style.maskImage = "url(trash.svg)";
     delete_button.appendChild(delete_icon);
 
 
-    const button_amount = 2;
-    const button_height = 30;
-    const gaps = 5; //space between buttons and padding between buttons and the border of the menu
-    const dropdown_height = button_amount*button_height + (button_amount-1)*gaps + gaps; //the extra gap is for the bottom (the top is acounted for with the padding-top)
+    const button_amount = 4;
+    const button_height = 40;
+    const gaps = 5; //space between buttons 
+    const dropdown_height = button_amount*button_height + (button_amount-1)*gaps + 2*gaps; //the extra gap is for the bottom and top
 
     menu_dropdown.style.height = `${dropdown_height}px`;
 
 
-    add_menu_functions(add_node_button, delete_button);
+    add_menu_functions(add_node_button, delete_button, save_button, load_button);
     
     
 
@@ -317,6 +366,13 @@ function menu(){
 
 
 
+
+
+window.addEventListener("resize", () => {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    draw_bkg();
+});
 
 let hold_timeout;  
 document.addEventListener("click", (event) => {
@@ -405,16 +461,13 @@ function toggle_physics(){
                 nestrutura tenta manter-se no centro do canvas
 ***********************************************************************************************************************************/
 
-    const b = document.getElementById("play");
 
     if (simulating){ //stop the simulation
         simulating = false;
-        b.textContent = "play";
         clearInterval(intervalId);
     }
     else{
         simulating = true; //if this function is called again, physics simulation should stop
-        b.textContent = "stop";
         intervalId = setInterval(() => { //setInterval calls physics() at regular intervals
             physics();
           }, 9); //tempo entre chamadas à função em ms

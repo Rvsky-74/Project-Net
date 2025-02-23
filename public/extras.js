@@ -14,8 +14,6 @@ function add_highlight_function(node){
         document.querySelectorAll('.arrow').forEach(element => {
             if(!(element.parent === node)) element.style.setProperty('--alpha', 0.3); 
         });
-
-
     });
 
     //turn all nodes back to normal when no longer hovering
@@ -44,26 +42,9 @@ function add_onClick_function(node){
             if(is_connection_valid){ 
                 origin_node.connections.push(node); //add the connection to the origin node object
 
-
-                const connection = document.createElement("div");
-                connection.className = "arrow";
-                container.appendChild(connection);
-
-                const tip = document.createElement("div");
-                tip.className = "tip";
-                connection.appendChild(tip);
-
-                const line = document.createElement("div");
-                line.className = "line";   
-                connection.appendChild(line);
-
-
-                connection.parent = origin_node;
-                connection.child = node;
+                create_arrow(origin_node, node);
 
                 update_colors(origin_node);
-
-                update_arrow_render(connection);
                 
                 return;
             }
@@ -74,7 +55,24 @@ function add_onClick_function(node){
     });
 }
 
+function create_arrow(parent, child){
+    const arrow = document.createElement("div");
+    arrow.className = "arrow";
+    container.appendChild(arrow);
 
+    const tip = document.createElement("div");
+    tip.className = "tip";
+    arrow.appendChild(tip);
+
+    const line = document.createElement("div");
+    line.className = "line";   
+    arrow.appendChild(line);
+
+    arrow.parent = parent;
+    arrow.child = child;
+
+    update_arrow_render(arrow);
+}
 
 function update_arrows(dx=0, dy=0){
     document.querySelectorAll('.arrow').forEach(element => {
@@ -172,10 +170,8 @@ function update_nodes(){
 }
 
 function start_dragging(x, y){
-    const rect = canvas.getBoundingClientRect();
-
     isMouseDown = true; // Start dragging when the mouse button is pressed
-    start_coords = [x - rect.left, y - rect.top];
+    start_coords = [x, y];
 
     nodes.forEach((node) => {
         node.initialTranslate = getTranslateValues(node);
@@ -188,7 +184,7 @@ function start_dragging(x, y){
 
 // Variable to store the entered text
 let enteredText = "";
-function add_menu_functions(add_node_button, delete_button){
+function add_menu_functions(add_node_button, delete_button, save_button, load_button){
     //Style the add_node button
     const vbar = document.createElement("div");
     vbar.className = "bar";
@@ -200,7 +196,7 @@ function add_menu_functions(add_node_button, delete_button){
 
 
     // Add help when hovering a button
-    const button_list = [add_node_button, delete_button];
+    const button_list = [add_node_button, delete_button, save_button, load_button];
     button_list.forEach(element => {
         element.addEventListener("mouseenter", () => {
             timeout = setTimeout(() => {
@@ -210,7 +206,9 @@ function add_menu_functions(add_node_button, delete_button){
 
                 // Change text as needed
                 tooltip.textContent = (element.className == "add-node") ? 
-                        "New Task":
+                        "New Task": (element.id == "savebutton") ?
+                        "Save current project": (element.id == "loadbutton") ?
+                        "Load Saved project":
                         "Delete everything"; 
                 
                 // Positioning the tooltip to the left of the element
@@ -285,10 +283,17 @@ function add_menu_functions(add_node_button, delete_button){
 
     // Delete button functionality
     delete_button.addEventListener("click", () => {
-        document.querySelectorAll(".node").forEach(element => element.remove());
-        document.querySelectorAll(".arrow").forEach(element => element.remove());
-        nodes.length = 0;
+        delete_all();
     });
+
+    save_button.addEventListener("click", () => {
+        saveUserData();
+    });
+
+    load_button.addEventListener("click", () => {
+        load();
+    });
+
 }
 
 
@@ -303,15 +308,14 @@ function add_menu_functions(add_node_button, delete_button){
 
 function print_nodes(){
     for(let i =0; i<nodes.length;i++){
-        console.log(nodes[i]);
-        console.log(nodes[i].connections[0].name);
+        console.log(nodes[i].style.transform);
     }
 }
 
 function setup_nodes(){
-    add_node(100,100, "acnio");
-    add_node(200,150, "wio");
-    add_node(100,50, "abc qwq qo aocew inecwwm si apq os");
+    add_node(null, null, "acnio");
+    add_node(null, null, "wio");
+    add_node(null, null, "abc qwq qo aocew inecwwm si apq os");
     draw_bkg();
     if (!simulating) toggle_physics();
 }
@@ -353,3 +357,16 @@ function getTranslateValues(element) {
     const matrix = new WebKitCSSMatrix(style.transform);
     return { x: matrix.m41, y: matrix.m42 }; // m41 = translateX, m42 = translateY
 }
+
+
+function delete_all(){
+    document.querySelectorAll(".node").forEach(element => element.remove());
+    document.querySelectorAll(".arrow").forEach(element => element.remove());
+    nodes.length = 0;
+}
+
+
+function is_name_available(name){
+    const bool = nodes.find(n => n.name === name)
+    return (bool) ? false : true;
+} 

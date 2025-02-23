@@ -191,7 +191,7 @@ body {
 
         }
 
-    .menu-dropdown .delete {
+    .menu-dropdown .base {
         position: relative;
         width: 30px;
         height: 30px;
@@ -203,7 +203,7 @@ body {
 
         border-radius: 5px; /* Rounds the corners */
     }
-        .delete .icon {
+        .base .icon {
             position: absolute;
             top: 50%;
             left: 50%;
@@ -212,11 +212,11 @@ body {
             height: 30px;
         
             background-color: #777;
-            mask-image: url(trash.svg);
             mask-repeat: no-repeat;
             mask-size: 28px;
             mask-position: 60%;
         }
+
 
     .menu-dropdown > *:hover {
         outline: solid;

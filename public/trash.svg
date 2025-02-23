@@ -1,0 +1,23 @@
+<svg width="310" height="310" xmlns="http://www.w3.org/2000/svg" version="1.0" preserveAspectRatio="xMidYMid meet">
+ <defs>
+  <!-- Define a mask to cut out the ellipses -->
+  <mask id="cutout">
+    <!-- Full rectangle in black to keep the shape visible -->
+    <rect width="100%" height="100%" fill="white"/>
+    <!-- Ellipses in black to make them transparent (cut-out) -->
+    <ellipse fill="black" stroke="black" stroke-width="17" ry="70.08696" rx="0.91319" cy="206.77541" cx="149.88173"/>
+    <ellipse fill="black" stroke="black" stroke-width="17" transform="matrix(1.13037 -0.139173 0.158863 0.990268 -36.0594 14.7713)" ry="70.87418" rx="0.80001" cy="207.47667" cx="76.65821"/>
+    <ellipse fill="black" stroke="black" stroke-width="17" transform="matrix(1.13037 0.139173 -0.158863 0.990268 31.707 -26.8146)" ry="70.84479" rx="0.80001" cy="210.99774" cx="192.45558"/>
+  </mask>
+ </defs>
+
+ <g id="Layer_1">
+  <title>Layer 1</title>
+  <g transform="rotate(-3 158.531 57.836)" stroke="null" id="svg_24">
+   <rect stroke="#000" transform="matrix(1.08808 0.289321 -0.312001 1.00898 12.2711 -48.9233)" id="svg_4" height="37" width="239" y="43.65403" x="32.74292" fill="#000000"/>
+   <path stroke="#000" id="svg_6" d="m135.91777,21.34859l73.98933,19.67381l-4.99202,16.1437l-73.98933,-19.67381l4.99202,-16.1437z" fill="#000000"/>
+  </g>
+  <!-- Apply the mask here -->
+  <path stroke="black" id="svg_2" d="m14.02398,111.04419l51.15243,190.40916l170.5081,0l51.15241,-190.40916l-272.81293,0z" fill="black" mask="url(#cutout)"/>
+ </g>
+</svg>

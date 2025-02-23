@@ -1,25 +1,30 @@
-body {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
+* {
     margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    overflow: hidden; /* Prevents scrolling */
+    width: 100%;
+    height: 100%;
 }
 
 /************************* Canvas Elements *************************/
 .canvas-default {
-    border: 2px solid black;
     background-color: rgba(212, 255, 255, 0.567);
 }
 .canvas-alt {
-    border: 1px solid black;
     background-color: rgba(194, 249, 249, 0.567);
 }
 
 
 .canvas-title {
-    text-align: center;
-    margin-bottom: 1px;
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translate(-50%, 0);
+    
 }
 
 .canvas-container {
@@ -72,6 +77,14 @@ body {
     mask-size: 28px;
     mask-position: 60%;
 }
+
+
+.button-container {
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translate(-50%,0);
+}
 /*****************************************************************************/
 
 
@@ -85,19 +98,19 @@ body {
     justify-content: space-between;
     align-items: center; /* Centers bars horizontally */
     justify-content: center; /* Centers the bars vertically */
-    gap: 4px; /* Adjusts the spacing between bars */
+    gap: 5px; /* Adjusts the spacing between bars */
 
-    background-color: #cccb;
+    background-color: #E4E4E4;
 
     position: absolute;
     top: 0px;
     right: 0px;
-    width: 40px;
-    height: 40px;
+    width: 50px;
+    height: 50px;
     border-radius: 5px; /* Rounds the corners */
 
-    margin-right: 5px;
-    margin-top: 5px;
+    margin-right: 20px;
+    margin-top: 20px;
 
     border: none;      /* Removes default border */
     outline: none;     /* Removes focus outline */
@@ -107,7 +120,7 @@ body {
     z-index: 2;
 }
     .menu-button div {
-        width: 100%;
+        width: 75%;
         height: 5px;
         background-color: #777a;
         border-radius: 3px;
@@ -122,12 +135,11 @@ body {
     position: absolute;
     right: 0px;
     top: 0px;
-    margin-top: 5px;
-    margin-right: 5px;
+    margin-top: 35px;
+    margin-right: 20px;
 
     background-color: rgba(200, 200, 200, 1);
-    width:40px;
-    height:100px;
+    width:50px;
     border-radius: 5px;
 
     display: flex;
@@ -168,8 +180,8 @@ body {
 
     .menu-dropdown .add-node {
         position: relative;
-        width: 30px;
-        height: 30px;
+        width: 40px;
+        aspect-ratio: 1;
 
         cursor: pointer;
 
@@ -191,10 +203,10 @@ body {
 
         }
 
-    .menu-dropdown .delete {
+    .menu-dropdown .base {
         position: relative;
-        width: 30px;
-        height: 30px;
+        width: 40px;
+        aspect-ratio: 1;
 
         cursor: pointer;
 
@@ -203,20 +215,20 @@ body {
 
         border-radius: 5px; /* Rounds the corners */
     }
-        .delete .icon {
+        .base .icon {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 30px;
-            height: 30px;
+            width: 100%;
+            height: 100%;
         
             background-color: #777;
-            mask-image: url(trash.svg);
             mask-repeat: no-repeat;
-            mask-size: 28px;
+            mask-size: 95%;
             mask-position: 60%;
         }
+
 
     .menu-dropdown > *:hover {
         outline: solid;
@@ -305,6 +317,8 @@ body {
     transition: width 0.3s ease; /* In order to make size increases smooth, while keeping everything else responsive */
 }
 .node .text {
+    pointer-events: none;
+
     --size: 14px;
     width: 100px;
     position: absolute;
@@ -352,3 +366,50 @@ body {
     background-color: rgba(var(--cor), var(--alpha));
 } 
 /*********************************************************************/
+
+
+
+
+/**************************** Login Button ****************************/
+#login-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    --img-size: 60px;
+    --margin: 15px;
+}
+    #login-container button {
+        position: absolute;
+        top: calc(var(--img-size) + 1.5*var(--margin));
+        left: calc(50% + var(--margin));
+
+        transform: translate(-50%, 0);
+
+        width: 60px;
+        height: 25px;
+        border-radius: 5px;
+
+        border: none;
+        background-color: #E4E4E4;
+        color: #555;
+        font-weight: bold;
+    }
+    #login-container #log-image {
+        position: relative;
+        top: var(--margin);
+        left: var(--margin);
+
+        width: var(--img-size);
+        aspect-ratio: 1;
+        
+        border-radius: 50%;
+        /* border: solid; */
+        overflow: hidden;
+        padding: 0;
+    }
+        #log-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center;  /* Centers the image */
+        }

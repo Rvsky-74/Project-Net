@@ -4,33 +4,43 @@
     <title>Projeto</title>
     <link rel="stylesheet" href="/idk.css">
 </head>
-<!-- nome do projeto no firebase task-manager-82b19 -->
+
 <body>  
-    <h1 class="canvas-title" id="Canvas_Text">
-        Project Visualizer
-    </h1>
+    
     
     <div class="canvas-container" id="canvas-container">
-        <canvas id="circleCanvas" class="canvas-default" width="500" height="500"></canvas>
+        <h1 class="canvas-title" id="Canvas_Text">
+            Project Visualizer
+        </h1>
+
+        <canvas id="circleCanvas" class="canvas-default" width="500px" height="500px"></canvas>
+
         <button class="menu-button" onclick="menu()">
             <div></div>
             <div></div>
             <div></div>
         </button>
-        <!-- <div class="center"></div> -->
+
+        <div id="login-container">
+            <button id="log" onclick="login()"></button>
+            <div id="log-image">
+                <img src="no-user.png" alt="profile" id="profile-pic">
+            </div>
+        </div>
+
+        <div class="button-container">
+            <button onclick="print_nodes()">debug</button>
+            <button onclick="setup_nodes()">predefined</button>
+        </div>
+
     </div>    
 
     <br>
 
-    <div class="button-container">
-        <button onclick="print_nodes()">debug</button>
-        <button onclick="setup_nodes()">predefined</button>
-        <button onclick="toggle_physics()" id="play">start</button>
-    </div>
+    
 
     <br>
 
-    <button id="googleSignInBtn" onclick="writeToFirestore()">testes</button>
 
 
     <script src="/extras.js"></script>

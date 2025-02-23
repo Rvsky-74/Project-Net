@@ -3,9 +3,9 @@
 <head>
     <title>Projeto</title>
     <link rel="stylesheet" href="/js_project/idk.css">
-  <script type="module" crossorigin src="/js_project/assets/index-to2GtWMd.js"></script>
+  <script type="module" crossorigin src="/js_project/assets/index-3PWXHQ1N.js"></script>
 </head>
-<!-- nome do projeto no firebase task-manager-82b19 -->
+
 <body>  
     <h1 class="canvas-title" id="Canvas_Text">
         Project Visualizer
@@ -18,7 +18,6 @@
             <div></div>
             <div></div>
         </button>
-        <!-- <div class="center"></div> -->
     </div>    
 
     <br>
@@ -31,7 +30,13 @@
 
     <br>
 
-    <button id="googleSignInBtn" onclick="writeToFirestore()">testes</button>
+    <div class="button-container">
+        <!-- <button onclick="loginWithGoogle()">login</button>
+        <button onclick="logout()">logout</button> -->
+        <button id="log" onclick="login()">a</button>
+        <button onclick="save()">save</button>
+        <button onclick="check_user()">check</button>
+    </div>
 
 
     <script src="/js_project/extras.js"></script>
