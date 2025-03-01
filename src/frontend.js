@@ -67,7 +67,6 @@ async function saveUserData(extraData = {}) {
     const conn = n.connections;
     const connection_list = [];
     conn.forEach(c => {
-      print(c.name);
       connection_list.push(c.name);
     });
     const n_info = {name:n.name, x:n.getBoundingClientRect().left, y:n.getBoundingClientRect().top, state:n.state, connections:connection_list};
@@ -148,6 +147,7 @@ async function load(){
           parent.connections.push(child);
         }); 
       });
+      nodes.forEach(n => update_colors(n, n.state, n.state));
 
       text.innerText = "Data Loaded";
     } else {

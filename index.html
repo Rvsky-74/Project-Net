@@ -9,9 +9,9 @@
     
     
     <div class="canvas-container" id="canvas-container">
-        <h1 class="canvas-title" id="Canvas_Text">
-            Project Visualizer
-        </h1>
+        <div class="info-holder">
+            <h1 class="canvas-title" id="Canvas_Text"> Welcome </h1>
+        </div>
 
         <canvas id="circleCanvas" class="canvas-default" width="500px" height="500px"></canvas>
 
@@ -27,6 +27,30 @@
                 <img src="no-user.png" alt="profile" id="profile-pic">
             </div>
         </div>
+
+
+        <div class="help" style="display: none;">
+            <div class="title">
+                Help
+                <button onclick="document.querySelector('.help').style.display = 'none';">
+                    <div class="x" style="transform: translate(-50%, -50%) rotate(45deg);"></div>
+                    <div class="x" style="transform: translate(-50%, -50%) rotate(-45deg);"></div>
+                </button>
+            </div>
+            <p>
+                <span style = "font-size: 20px; font-weight: bold;">What is this app</span><br><br>
+                This is an organizer for large projects with a lot of dependencies. 
+                It allows the user to create a net of milestones for the bigger project and assign them as completed or not.
+                The user can then link the nodes to each other, so that an arrow points from a to b if b is a pre-requisite for a.
+                This helps to visualize the overall progress and focus on the correct goals, before starting something that needed another task done beforehand.
+                <br><br>
+                When a task is completed, the program marks as completed all tasks that were pre-requisites for the task. 
+                If all pre-requisites for a task are completed, but not the task itself, the task is highlighted to indicate that it should now be focused on.
+
+
+            </p>
+        </div>
+
 
         <div class="button-container">
             <button onclick="print_nodes()">debug</button>

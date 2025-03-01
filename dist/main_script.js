@@ -1,4 +1,7 @@
 const canvas = document.getElementById('circleCanvas');
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
 const ctx = canvas.getContext('2d');
 const container = document.getElementById("canvas-container");
 const nodes = [];
@@ -31,6 +34,7 @@ let bkg_y_off = 0;
 let centro = [canvas.width/2, canvas.height/2]; //centro do canvas, para onde os nodos vão ser atraidos
 
 
+
 draw_bkg();
 
 // Funcionamento geral
@@ -39,12 +43,12 @@ draw_bkg();
 
 
 /* TODO Coisas gráficas
-aumentar e centrar canvas
-aumentar circulo do nodo destacado
+imagens para os botoes de load, save e help
+melhorar texto de ajuda com imagens
 */
 
 /* TODO Funcionalidades
-melhor interface de adicionar pontos
+scroll to zoom (quando a visão está afastada nao mostrar o texto)
 */
 
 
@@ -65,8 +69,14 @@ function add_node(x=null, y=null, name=null){
                 - Cor que começa como roxa e vai mudar dependendo do estado do nodo
 ***********************************************************************************************************************************/
 
+    //check if name already exists, if so place a plus in front
+    while (!is_name_available(name)){
+        name += '+';
+    }
+
+
     const node = document.createElement("div");
-    node.className = "node";
+    node.classList.add("node", "default", "doable");
     node.style.left = (x!=null) ? x + "px" : Math.random()*canvas.width + "px";
     node.style.top = (y!=null) ? y + "px" : Math.random()*canvas.height + "px";    
    
@@ -79,7 +89,6 @@ function add_node(x=null, y=null, name=null){
     node.y = parseInt(node.style.top, 10);
 
     container.appendChild(node);
-
     nodes.push(node); 
 
     add_highlight_function(node);
@@ -93,11 +102,36 @@ function add_node(x=null, y=null, name=null){
     if (!simulating) toggle_physics();
 }
 
+function createNode(name, x, y, state=null){
+    const node = document.createElement("div");
+    node.classList.add("node", (state != null) ? state:"default", "doable");
+
+    node.x = x;
+    node.y = y;
+    node.name = name;
+    if (state) node.state = state;
+    node.connections = [];
+
+    node.movimento = [0,0];
+
+    node.style.top = y + 'px';
+    node.style.left = x + 'px';
+
+    container.appendChild(node);
+    nodes.push(node); 
+
+    add_highlight_function(node);
+    add_onClick_function(node);
+
+    const text = document.createElement("div");
+    text.className = "text";
+    text.textContent = name;
+    node.appendChild(text);
+}
 
 
 
-
-function draw_bkg(x_ofset = 0, y_ofset = 0){
+function draw_bkg(x_ofset = 0, y_ofset = 0){    
 /**********************************************************************************************************************************
     Recebe:
             x_ofset, y_ofset -> Deslocamentos no plano para redesenhar o grid
@@ -119,7 +153,7 @@ function draw_bkg(x_ofset = 0, y_ofset = 0){
         ctx.stroke();
     }
     if (!link_mode_on){
-        const step = 15;
+        const step = 20;
         let x_off = x_ofset + bkg_x_off;
         let y_off = y_ofset + bkg_y_off;
         while (x_off > step/2) x_off -= step;
@@ -156,30 +190,52 @@ function open_options(n){
 
 
     ///////// Criar a caixa onde vão estar os botões /////////
-    const box = document.createElement("div");
-    box.id = "options_box";
-    box.className = "box";
+    const box = create_new_element("div", container, id = "box", classes = ["box", n.state]);
     box.style.left = `${x}px`;
     box.style.top = `${y}px`;
-    const box_color = (n.state === "completed") ? color_code["light_green"]:
-                      (n.state === "uncompleted") ? color_code["light_red"]:
-                      color_code["light_purple"]; 
-
-    box.style.background = `rgb(${box_color})`;
-    container.appendChild(box);
 
 
-
-    ////////////////// Botão para conexões ///////////////////
-    const connect = document.createElement("button");
-    box.appendChild(connect);
-    connect.id = "b1";
     
-    connect.textContent = "Make Connections";
+    ////////////////// Botão para mudar estado ///////////////////
 
-    connect.addEventListener("click", (event)=>{
+    // Estrutura contendo o botão e o texto descritivo
+    const first_line = create_new_element("div", box, null, ["button-text-wrapper"]);
+
+    // Texto
+    const text = create_new_element("div", first_line, null, classes=["state-text"]);
+    text.textContent = (n.state === "default") ? "undefined" : n.state;
+
+    // Botão de mudança de estado
+    const toggle_state = create_new_element("button", first_line, null, classes=["rounded-square-btn", n.state]);
+    const inner_circle = create_new_element("div", toggle_state, null, classes=["small-circle"]);
+
+    // Funcionalidade de mudar de estado
+    toggle_state.addEventListener("click", (event)=>{
+        toggle_state.classList.toggle("active");
+
+        const new_state = (n.state === "default" || 
+                           n.state === "uncompleted") ? 
+                           "completed" : "uncompleted";
+
+        box.classList.replace(n.state, new_state);
+        toggle_state.classList.replace(n.state, new_state);
+        n.classList.replace(n.state, new_state);
+        text.textContent = new_state;
+        
+
+        update_colors(n, n.state, new_state);
+    }); 
+
+
+
+
+    ////////////////// Botão para ativar modo de ligações ///////////////////
+    const second_line = create_new_element("div", box); 
+
+    const make_connections = create_new_element("button", second_line, id="b1", classes=["link-button"]);  
+    make_connections.textContent = "Make Connections";
+    make_connections.addEventListener("click", (event)=>{
         // Inicia o modo de selecionar ligações
-        // Para isso, tem de se incluir um botão de cancelar este modo (stop button) 
         link_mode_on = true;
         origin_node = n;
         draw_bkg();
@@ -189,73 +245,11 @@ function open_options(n){
 
         // make it visually obvious that we are in connection mode
         canvas.classList.replace("canvas-default", "canvas-alt"); 
-        document.getElementById("Canvas_Text").innerText = "Select Child Nodes";
-
-        const stop = document.createElement("button");
-        container.appendChild(stop);
-
-        stop.textContent = "X";
-        stop.style.position = "absolute";
-        stop.style.top = `0px`;   
-        stop.style.left = `0px`;
-
-        stop.addEventListener("click", (event)=>{
-            // go back to default settings
-            canvas.classList.replace("canvas-alt", "canvas-default");
-            document.getElementById("Canvas_Text").innerText = "Project Visualizer";
-
-            link_mode_on = false;
-            stop.remove();
-            draw_bkg();
-            toggle_physics(); //resume physics simulation
-        });
+        public_print("Select pre-requisites for this task");
     });
-
-
-
-    ////////////////// Botão para mudar estado ///////////////////
-    
-    // Estrutura contendo o botão e o texto descritivo
-    const text_and_button = document.createElement("div");
-    text_and_button.className = "button-text-wrapper";
-    box.append(text_and_button);
-    
-    // Texto
-    const state_text = document.createElement("span");
-    state_text.textContent = "Completion Status";
-    text_and_button.append(state_text);
-
-    // Botão de mudança de estado
-    const toggle_state = document.createElement("button");
-    text_and_button.appendChild(toggle_state);
-    toggle_state.className = "rounded-square-btn" ;
-    toggle_state.style.outlineColor = state_to_color(n.state);
-
-    const inner_circle = document.createElement("div");
-    inner_circle.className = "small-circle";
-    inner_circle.style.background = state_to_color(n.state);
-    toggle_state.appendChild(inner_circle);
-
-    // Funcionalidade do botão
-    toggle_state.addEventListener("click", (event)=>{
-        toggle_state.classList.toggle("active");
-
-        const new_state = (n.state === "default" || 
-                           n.state === "uncompleted") ? 
-                           "completed" : "uncompleted";
-
-        n.state = new_state;
-
-        box.style.background = state_to_color(new_state, light=true);
-        toggle_state.style.outlineColor = state_to_color(new_state);
-        inner_circle.style.background = state_to_color(new_state);
-
-        update_colors(n);
-    });
-
-    
-
 }
+
+
 
 
 let menu_opened = false;
@@ -263,10 +257,9 @@ function menu(){
 /**********************************************************************************************************************************
     Recebe: ---
     Retorna:
-            Abre/fecha o menu de opções
-            O menu permite:
-                adicionar um novo nodo
-                
+            Abre/fecha o menu de opções      
+    Chamada por:
+            on_click do menu button, diretamente do html          
 ***********************************************************************************************************************************/
     menu_opened = !menu_opened;
     
@@ -282,40 +275,38 @@ function menu(){
     }
 
 
-    const menu_dropdown = document.createElement("div"); //this will contain all buttons of the menu
-    menu_dropdown.className = "menu-dropdown";
-    container.appendChild(menu_dropdown);
-    menu_dropdown.classList.add("animate");
+    const menu_dropdown = create_new_element("div", container, null, ["menu-dropdown", "animate"]);
 
 
-    const add_node_button = document.createElement("button");
-    add_node_button.className = "add-node";
-    menu_dropdown.appendChild(add_node_button);
+    const add_node_button = create_new_element("button", menu_dropdown, "addbutton", ["add-node"]);
 
-    const delete_button = document.createElement("button");
-    delete_button.className = "base";
-    menu_dropdown.appendChild(delete_button);
+    const save_button = create_new_element("button",  menu_dropdown, "savebutton", ["base"]);
+    const save_icon = create_new_element("div", save_button, null, ["icon"]);
+    save_icon.style.maskImage = "url(save.svg)";
 
-    const delete_icon = document.createElement("div");
-    delete_icon.className = "icon";
+    const load_button = create_new_element("button", menu_dropdown, "loadbutton", ["base"]);
+    const load_icon = create_new_element("div", load_button, null, ["icon"]);
+    load_icon.style.maskImage = "url(load.svg)";
+
+    const delete_button = create_new_element("button", menu_dropdown, "deletebutton", ["base"]);
+    const delete_icon = create_new_element("div", delete_button, null, ["icon"]);
     delete_icon.style.maskImage = "url(trash.svg)";
-    delete_button.appendChild(delete_icon);
 
-    const save_button = document.createElement("button");
-    save_button.className = "base";
-    save_button.id = "savebutton";
-    menu_dropdown.appendChild(save_button);
+    const info_button = create_new_element("button", menu_dropdown, "infobutton", ["base"]);
+    const info_icon = create_new_element("div", info_button, null, ["icon"]);
+    info_icon.style.maskImage = "url(question-mark.svg)";
+    info_icon.style.maskSize = "90%";
 
 
-    const button_amount = 3;
-    const button_height = 30;
-    const gaps = 5; //space between buttons and padding between buttons and the border of the menu
-    const dropdown_height = button_amount*button_height + (button_amount-1)*gaps + gaps; //the extra gap is for the bottom (the top is acounted for with the padding-top)
+    const button_amount = 5;
+    const button_height = 40;
+    const gaps = 5; //space between buttons 
+    const dropdown_height = button_amount*button_height + (button_amount-1)*gaps + 2*gaps; //the extra gap is for the bottom and top
 
     menu_dropdown.style.height = `${dropdown_height}px`;
 
 
-    add_menu_functions(add_node_button, delete_button, save_button);
+    add_menu_functions(add_node_button, delete_button, save_button, load_button, info_button);
     
     
 
@@ -324,30 +315,37 @@ function menu(){
 
 
 
+
+window.addEventListener("resize", () => {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    draw_bkg();
+});
+
 let hold_timeout;  
 document.addEventListener("click", (event) => {
     isMouseDown = false;
     clearInterval(hold_timeout);
 
+    // stop link mode when we click outside a node
+    if (link_mode_on && !event.target.closest(".node") && !event.target.closest(".box") && !dragged) {close_link_mode(); draw_bkg();};
 
     // if the input box was opened and we 
-    // clicked neither in it or in the button to create it, delete the input box
+    // clicked neither in it nor in the button to create it, delete the input box
     if (document.querySelector(".input-box") && !(event.target.matches(".add-node, .add-node *") || event.target.matches(".input-box"))){
         document.querySelector(".input-box").remove();
     }
 
     //if we clicked outside the info box, close it 
-    if (!event.target.closest(".box")) {
-
-        document.querySelectorAll(".box").forEach(element => element.remove());
+    if (!event.target.closest("#box")) {
+        document.querySelectorAll("#box").forEach(element => element.remove());
         box_opened = false;      
         
-        if (!simulating) toggle_physics();
+        if (!simulating && !link_mode_on) toggle_physics();
     }
 
-    if (dragged){ //update the position of the background if the screen was dragged
+    if (dragged){ 
         update_nodes();
-        // update_arrows();
     }
     start_coords = end_coords;
 
@@ -357,6 +355,9 @@ document.addEventListener("click", (event) => {
 
 canvas.addEventListener('mousedown', function(event) {
     start_dragging(event.clientX, event.clientY);
+
+    //after the welcome message, any help from the title text disapears after a click
+    if (document.getElementById("Canvas_Text").innerText != "Welcome") public_print("");
 });
 
 
@@ -411,16 +412,13 @@ function toggle_physics(){
                 nestrutura tenta manter-se no centro do canvas
 ***********************************************************************************************************************************/
 
-    const b = document.getElementById("play");
 
     if (simulating){ //stop the simulation
         simulating = false;
-        b.textContent = "play";
         clearInterval(intervalId);
     }
     else{
         simulating = true; //if this function is called again, physics simulation should stop
-        b.textContent = "stop";
         intervalId = setInterval(() => { //setInterval calls physics() at regular intervals
             physics();
           }, 9); //tempo entre chamadas à função em ms
@@ -431,7 +429,7 @@ function toggle_physics(){
         const x0 = 50;
         const junction_strength = 0.2;
         const repel_strength = 200000;
-        const center_force = 15;
+        const center_force = 30;
 
         for (let i = 0; i<nodes.length; i++){
             nodes[i].movimento = [0,0];

@@ -1,26 +1,83 @@
-body {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
+* {
     margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    user-select: none;
 }
+
+html, body {
+    overflow: hidden; /* Prevents scrolling */
+    width: 100%;
+    height: 100%;
+}
+
+
+
+.default {
+    --dark-color: rgb(50,0,100);
+    --light-color: rgb(122,102,162);
+
+    --dark-color-raw: 50,0,100;
+    --light-color-raw: 122, 102, 162;
+}
+.completed {
+    --dark-color: rgb(49,180,96);
+    --light-color: rgb(132,221,145);
+
+    --dark-color-raw: 49,180,96;
+    --light-color-raw: 132,221,145;
+}
+.uncompleted {
+    --dark-color: rgb(171,28,33);
+    --light-color: rgb(204,119,136);
+
+    --dark-color-raw: 171,28,33;
+    --light-color-raw: 204,119,136;
+}
+
+
+
+
+
 
 /************************* Canvas Elements *************************/
 .canvas-default {
-    border: 2px solid black;
     background-color: rgba(212, 255, 255, 0.567);
 }
 .canvas-alt {
-    border: 1px solid black;
     background-color: rgba(194, 249, 249, 0.567);
 }
 
 
-.canvas-title {
-    text-align: center;
-    margin-bottom: 1px;
+.info-holder {
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translate(-50%, 0);
+
+    display: inline-block;
+    border-radius: 5px;
+
+    background-color: #E4E4E4;
+    border: solid;
+    border-color: #555;
 }
+    .canvas-title {
+        position: relative;
+        top: 0;
+        left: 0;
+
+        color: #555;
+
+        margin: 10px;
+    }
+    .info-holder:has(h1:empty) {
+        display: none;
+    }
+    .info-holder:has(h1:not(:empty)) {
+        display: block;
+    }
+
 
 .canvas-container {
     position: relative; /* Ensures children are positioned relative to this */
@@ -31,8 +88,7 @@ body {
     overflow: hidden; /* Ensures content outside gets clipped */
 }
 
-
-.center {
+/* .center {
     position: absolute;
     top: 50%;
     left: 50%;
@@ -71,7 +127,15 @@ body {
     mask-repeat: no-repeat;
     mask-size: 28px;
     mask-position: 60%;
-}
+}*/
+
+
+.button-container {
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translate(-50%,0);
+} 
 /*****************************************************************************/
 
 
@@ -85,21 +149,23 @@ body {
     justify-content: space-between;
     align-items: center; /* Centers bars horizontally */
     justify-content: center; /* Centers the bars vertically */
-    gap: 4px; /* Adjusts the spacing between bars */
+    gap: 5px; /* Adjusts the spacing between bars */
 
-    background-color: #cccb;
+    background-color: #E4E4E4;
+
+    border: solid;
+    border-color: #555;
 
     position: absolute;
     top: 0px;
     right: 0px;
-    width: 40px;
-    height: 40px;
+    width: 50px;
+    height: 50px;
     border-radius: 5px; /* Rounds the corners */
 
-    margin-right: 5px;
-    margin-top: 5px;
+    margin-right: 20px;
+    margin-top: 20px;
 
-    border: none;      /* Removes default border */
     outline: none;     /* Removes focus outline */
 
     cursor: pointer;
@@ -107,9 +173,9 @@ body {
     z-index: 2;
 }
     .menu-button div {
-        width: 100%;
+        width: 75%;
         height: 5px;
-        background-color: #777a;
+        background-color: #777;
         border-radius: 3px;
     }
     .menu-button:hover{
@@ -122,12 +188,11 @@ body {
     position: absolute;
     right: 0px;
     top: 0px;
-    margin-top: 5px;
-    margin-right: 5px;
+    margin-top: 35px;
+    margin-right: 20px;
 
     background-color: rgba(200, 200, 200, 1);
-    width:40px;
-    height:100px;
+    width:50px;
     border-radius: 5px;
 
     display: flex;
@@ -168,8 +233,8 @@ body {
 
     .menu-dropdown .add-node {
         position: relative;
-        width: 30px;
-        height: 30px;
+        width: 40px;
+        aspect-ratio: 1;
 
         cursor: pointer;
 
@@ -193,8 +258,8 @@ body {
 
     .menu-dropdown .base {
         position: relative;
-        width: 30px;
-        height: 30px;
+        width: 40px;
+        aspect-ratio: 1;
 
         cursor: pointer;
 
@@ -208,12 +273,12 @@ body {
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 30px;
-            height: 30px;
+            width: 100%;
+            height: 100%;
         
             background-color: #777;
             mask-repeat: no-repeat;
-            mask-size: 28px;
+            mask-size: 95%;
             mask-position: 60%;
         }
 
@@ -239,6 +304,7 @@ body {
     background: white;
     outline-width: 5px;
     outline-style: solid;
+    outline-color: var(--dark-color);
     display: flex;
     align-items: center;
     padding: 2px;
@@ -252,6 +318,8 @@ body {
     position: absolute;
     left: 3px; /* Start position */
     transition: left 0.3s ease;
+
+    background-color: var(--dark-color);
 }
 .rounded-square-btn.active .small-circle {
     left: 15px; /* Move to the right */
@@ -267,17 +335,63 @@ body {
     padding: 10px;
     display: flex;
     flex-direction: column;
-    gap: 5px;
+    gap: 15px;
 
     height: auto;
     min-height: fit-content;
+
+    background-color: var(--light-color);
+    border: solid;
+    border-width: 5px;
+    border-color: var(--dark-color);
 }
 
+.link-button {
+    cursor: pointer;
+    white-space: nowrap;
+
+    border-radius: 5px;
+
+
+    background-color: var(--dark-color);
+    color: white;
+    font-weight: bold;
+
+    padding: 5px;
+}
+
+.link-button:hover {
+    outline: solid;
+    outline-width: 2px;
+    outline-color: black;
+}
 .button-text-wrapper {
     display: flex;
-    align-items: center; /* Vertically align text and button */
-    gap: 10px; /* Space between text and button */
+    /* align-items: center; Vertically align text and button */
+    gap: 15px; /* Space between text and button */
 }
+.state-text {
+    width: 70%;
+    height: 15px;
+    border-radius: 2px;
+
+    display: flex;
+    text-align: center;
+    justify-content: center;
+    align-items: center;
+
+    outline: solid;
+    outline-width: 5px;
+    outline-color: var(--dark-color);
+
+    padding: 5px;
+
+    color: var(--dark-color);
+    font-weight: bolder;
+
+    box-sizing: border-box;
+}
+
 /*********************************************************************/
 
 
@@ -286,8 +400,6 @@ body {
 
 /**************************** Nodes ****************************/
 .node {
-    --out-color: 50,0,100;
-    --in-color: 122,102,162;
     --diameter: 21px;
 
     width: var(--diameter);
@@ -295,16 +407,18 @@ body {
     border-radius: 50%;
     position: absolute;
 
-    background-color: rgba(var(--in-color), var(--alpha, 1));
+    background-color: rgba(var(--light-color-raw), var(--alpha, 1));
     
     outline: solid;
     outline-width: 3px;
-    outline-color: rgba(var(--out-color), var(--alpha, 1));
+    outline-color: rgba(var(--dark-color-raw), var(--alpha, 1));
 
     transform: translate(-50%, -50%);
-    transition: width 0.3s ease; /* In order to make size increases smooth, while keeping everything else responsive */
+    transition: width 0.3s ease-in-out; /* In order to make size increases smooth, while keeping everything else responsive */
 }
 .node .text {
+    pointer-events: none;
+
     --size: 14px;
     width: 100px;
     position: absolute;
@@ -314,6 +428,19 @@ body {
     top: calc(var(--diameter) / 2 + var(--size)); /* Places text right below the node */
     left: 50%;
     transform: translateX(-50%);
+}
+
+.undoable {
+    outline-style: solid;
+}   
+.doable {
+    outline-style: dashed;
+}
+
+.complete-mask {
+    background-color: rgb(132,221,145);
+    outline-color: rgb(49,180,96);
+    outline-style: solid;
 }
 /*********************************************************************/
 
@@ -325,7 +452,6 @@ body {
 .arrow {
     position: absolute;
     --alpha: 1;
-    --cor: 50, 0, 100;
     top: 0px;
     left: 0px;
 }
@@ -338,7 +464,7 @@ body {
     height: 5px;
     border-top: var(--border-thickness) solid black;
     border-right: var(--border-thickness) solid black;
-    border-color: rgba(var(--cor), var(--alpha));
+    border-color: rgba(var(--dark-color-raw), var(--alpha));
 
     position: absolute;
     
@@ -349,6 +475,151 @@ body {
     left: 0px;
     height: 2px; /* Line thickness */
     transform-origin: left; 
-    background-color: rgba(var(--cor), var(--alpha));
+    background-color: rgba(var(--dark-color-raw), var(--alpha));
 } 
+.line-mask {
+    background-color: rgba(49,180,96, var(--alpha)) !important; 
+}
+.tip-mask {
+    border-color: rgba(49,180,96, var(--alpha)) !important;
+}
+/*********************************************************************/
+
+
+
+
+/**************************** Login Button ****************************/
+#login-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    --img-size: 60px;
+    --margin: 15px;
+}
+    #login-container button {
+        position: absolute;
+        top: calc(var(--img-size) + 1.5*var(--margin));
+        left: calc(50% + var(--margin));
+
+        transform: translate(-50%, 0);
+
+        width: 60px;
+        height: 25px;
+        border-radius: 5px;
+
+        border: none;
+        background-color: #E4E4E4;
+        color: #555;
+        font-weight: bold;
+
+        border: solid;
+        border-color: #555;
+        border-width: 3px;
+
+        cursor: pointer;
+    }
+    #login-container button:hover {
+        box-shadow: 0 0 0 1px #555;
+    }
+    #login-container #log-image {
+        position: relative;
+        top: var(--margin);
+        left: var(--margin);
+
+        width: var(--img-size);
+        aspect-ratio: 1;
+        
+        border-radius: 50%;
+        overflow: hidden;
+        padding: 0;
+
+        border: solid;
+        border-color: #555;
+    }
+        #log-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center;  /* Centers the image */
+        }
+/*********************************************************************/
+
+
+
+/**************************** Instructions / help ****************************/
+.help {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+
+    width: 500px;
+    height: 500px;
+    border-radius: 5px;
+
+    background-color: #E4E4E4;
+
+    border: solid;
+    border-color: #777;
+    border-width: 5px;
+
+    box-sizing: border-box;
+    word-wrap: break-word; /* Ensures long words wrap */
+    overflow-wrap: break-word; /* Alternative for better compatibility */
+    white-space: normal; /* Allows text to wrap */
+
+    z-index: 5;
+}
+    .help button {
+        position: absolute;
+        top: 50%;
+        right: 0px;
+        transform: translate(-50%,-50%);
+
+        width: 30px;
+        height: 30px;
+        border-radius: 5px;
+
+        background-color: #E4E4E4;
+    }
+    .help p {
+        position: relative;
+        top: 10%;
+        margin: 10px;
+
+        text-align: justify;
+    }
+    .help .title {
+        position: absolute;
+        top: 0;
+        left: 0;
+
+        width: 100%;
+        height: 10%;
+
+        display: flex;
+        align-items: center;
+        padding-left: 20px;
+
+        background-color: #aaa;
+
+        font-weight: bold;
+        font-size: 32px;
+    }
+        .help .x {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+
+            width: 85%;
+            height: 5px;
+            border-radius: 5px;
+
+            transform-origin: center;
+            margin: 0 auto; /* Center horizontally */
+
+
+            background-color: #777;
+        }
+
 /*********************************************************************/
