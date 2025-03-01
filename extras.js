@@ -9,7 +9,7 @@ function add_highlight_function(node){
         });
         node.style.setProperty('--alpha', 1);
 
-        node.style.width = 1.2 * prev_width + 'px';
+        node.style.setProperty("--diameter", 1.2 * prev_width + 'px');
 
         document.querySelectorAll('.arrow').forEach(element => {
             if(!(element.parent === node)) element.style.setProperty('--alpha', 0.3); 
@@ -21,7 +21,8 @@ function add_highlight_function(node){
         const elements = document.querySelectorAll('.node');
         elements.forEach(element => {
             element.style.setProperty('--alpha', 1); 
-            element.style.width = prev_width + 'px';
+            element.style.setProperty("--diameter", prev_width + 'px');
+
         });
 
         document.querySelectorAll('.arrow').forEach(element => {
@@ -36,20 +37,39 @@ function add_onClick_function(node){
     node.addEventListener('click', function(event){
         event.stopPropagation();
         if (link_mode_on){ //a connection was selected
+            
             let is_connection_valid = origin_node != node && //a node cant depend on itself
                                       !(origin_node.connections.includes(node)) && //avoid assigning same node multiple times
                                       !(node.connections.includes(origin_node)); //double dependancies make no sense in this context
             if(is_connection_valid){ 
+                if (creates_loop(origin_node, node)){
+                    public_print("That would make a loop impossible to complete");
+                    return;
+                }
+
                 origin_node.connections.push(node); //add the connection to the origin node object
+                create_arrow(origin_node, node);      
+                update_colors(node, node.state, node.state);
 
-                create_arrow(origin_node, node);
+                return;
+            }
 
-                update_colors(origin_node);
-                
+            if (origin_node.connections.includes(node)){ //if we clicked a node that was already connected, delete that connection
+                document.querySelectorAll(".arrow").forEach(arrow => {
+                    if (arrow.parent == origin_node && arrow.child == node) {arrow.remove(); print(arrow.child, node, arrow.child == node)};
+                });                
+                let index = origin_node.connections.indexOf(node);
+                if (index !== -1) {
+                    origin_node.connections.splice(index, 1);
+                }
+
+                update_colors(node, node.state, node.state);
+                update_colors(origin_node, node.state, node.state);
+
                 return;
             }
         }
-        if (!box_opened){ //to prevent opening multiple boxes at the same time
+        if (!box_opened && !link_mode_on){ //to prevent opening multiple boxes at the same time
             open_options(node);
         }
     });
@@ -57,7 +77,7 @@ function add_onClick_function(node){
 
 function create_arrow(parent, child){
     const arrow = document.createElement("div");
-    arrow.className = "arrow";
+    arrow.classList.add("arrow", child.state);
     container.appendChild(arrow);
 
     const tip = document.createElement("div");
@@ -123,28 +143,76 @@ function update_arrow_render(arrow, off_x=0, off_y=0){
 
 
 
+function update_colors(node, old_state, new_state){
+//Called when loading nodes, when changing the state of a node and when updating a connection
+    const state_changed = old_state != new_state;
+    let is_pointed_to = false;
+    node.state = new_state;
 
-function update_colors(node){
-    // first update the node's color
-    let c = state_to_color(node.state, light = true);
-    node.style.setProperty('--in-color', c.slice(4,-1));
+    if (node.connections.length == 0){ //if the task depends on nothing
+        if (new_state != "completed") node.classList.replace("undoable", "doable");
+    }
 
-    c = state_to_color(node.state, light = false);
-    node.style.setProperty('--out-color', c.slice(4,-1));
+    document.querySelectorAll('.arrow').forEach(arrow => {
+        if(arrow.child === node){ 
+            is_pointed_to = true;
+            
+            //the arrow pointing to a node should have a state equal to the node's
+            arrow.classList.replace(old_state, new_state);
 
-    // then update its connections
-    document.querySelectorAll('.arrow').forEach(element => {
-        if(element.parent === node){
-            element.style.setProperty('--cor', c.slice(4,-1));
+            // how many uncompleted dependencies the node has. If it has none, it's now completable 
+            if ((arrow.parent.connections.filter(n => n.state === "uncompleted" || n.state === "default")).length == 0){ 
+                // in case the completable node is not done yet, ww should higlight it
+                if (arrow.parent.state != "completed") arrow.parent.classList.replace("undoable", "doable");
+            } 
+            else {
+                arrow.parent.classList.replace("doable", "undoable");
+            }
         }
-    
+    });
+    if (node.state == "completed") node.classList.replace("doable", "undoable"); //no point in higlighting a completed node
 
 
-        
-
-////////////////////////////////// Small functions ////////////////////////////////////
-});
+    //if a task was completed, its dependencies are probably also complete
+    //however, marking as done might be an error, so returning the node to uncompleted should return the dependancies to their original state
+    // i will do that by just masking the dependencies instead of changing their states
+    // if it goes back to uncompleted, remove the masks
+    if (node.connections.length != 0){
+        node_tree_search(node, (new_state=="completed") ? true:false);
+    }
 }    
+function node_tree_search(node, apply_mask, visited_nodes = new Set()){
+    //check the tree of dependencies of the node
+    // mask/remove mask and turn the arrows pointing to them the correct color
+    //apply_mask = true -> make it green
+    //apply_mask = false -> remove the green
+
+    visited_nodes.add(node);
+
+    node.connections.forEach(n => {
+        if (apply_mask) n.classList.add("complete-mask");
+        else n.classList.remove("complete-mask");
+
+        document.querySelectorAll(".arrow").forEach(arrow => {
+            if (arrow.child == n){
+                let line = arrow.querySelector(".line");
+                let tip = arrow.querySelector(".tip");
+
+                if (apply_mask){
+                    line.classList.add("line-mask");
+                    tip.classList.add("tip-mask");
+                } 
+                else {
+                    line.classList.remove("line-mask");
+                    tip.classList.remove("tip-mask");
+                }
+            }
+        });
+        if (!visited_nodes.has(n)) node_tree_search(n, apply_mask, visited_nodes);
+    });
+    return;
+}
+
 
 
 function update_nodes(){
@@ -184,7 +252,7 @@ function start_dragging(x, y){
 
 // Variable to store the entered text
 let enteredText = "";
-function add_menu_functions(add_node_button, delete_button, save_button, load_button){
+function add_menu_functions(add_node_button, delete_button, save_button, load_button, info_button){
     //Style the add_node button
     const vbar = document.createElement("div");
     vbar.className = "bar";
@@ -196,7 +264,7 @@ function add_menu_functions(add_node_button, delete_button, save_button, load_bu
 
 
     // Add help when hovering a button
-    const button_list = [add_node_button, delete_button, save_button, load_button];
+    const button_list = [add_node_button, delete_button, save_button, load_button, info_button];
     button_list.forEach(element => {
         element.addEventListener("mouseenter", () => {
             timeout = setTimeout(() => {
@@ -205,11 +273,12 @@ function add_menu_functions(add_node_button, delete_button, save_button, load_bu
                 tooltip.className = "tooltip";
 
                 // Change text as needed
-                tooltip.textContent = (element.className == "add-node") ? 
-                        "New Task": (element.id == "savebutton") ?
-                        "Save current project": (element.id == "loadbutton") ?
-                        "Load Saved project":
-                        "Delete everything"; 
+                const button_descriptions = {"addbutton": "New Task", 
+                                             "savebutton": "Save Current Project",
+                                             "loadbutton": "Load Saved Project",
+                                             "deletebutton": "Clear Canvas",
+                                             "infobutton": "Instructions / Help"};
+                tooltip.textContent = button_descriptions[element.id];
                 
                 // Positioning the tooltip to the left of the element
                 tooltip.style.position = "absolute";
@@ -224,7 +293,7 @@ function add_menu_functions(add_node_button, delete_button, save_button, load_bu
                 tooltip.style.whiteSpace = "nowrap";
     
                 element.appendChild(tooltip);
-            }, 500); // 2 seconds delay
+            }, 500); // 500ms delay
         });
         element.addEventListener("mouseleave", () => {
             clearTimeout(timeout); // Prevent tooltip from appearing if the user leaves early
@@ -268,9 +337,36 @@ function add_menu_functions(add_node_button, delete_button, save_button, load_bu
 
         // Event listener for "Enter" key
         inputBox.addEventListener("keydown", (event) => {
-            if (event.key === "Enter") {
+            if (event.key === "Enter" && inputBox.value.trim() != '') {
+                
                 enteredText = inputBox.value.trim(); // Store input value
                 inputBox.remove(); // Remove input box after entering text
+
+                if (!is_name_available(enteredText)){
+                    public_print("Task already in the project"); 
+                    const repeated_node = nodes.find(n => n.name === enteredText);
+                    
+                    const dx = canvas.width/2 - repeated_node.x;
+                    const dy = canvas.height/2 - repeated_node.y;
+
+                    move_all(dx, dy);
+
+                    //increase the node to highlight it and then reduce it to original size
+                    const prev_diam = parseInt(window.getComputedStyle(repeated_node).getPropertyValue("--diameter").slice(0,-2), 10);     
+                    print(prev_diam);   
+                    repeated_node.style.setProperty("--diameter", prev_diam*1.3 + 'px');
+
+                    function return_original_width(event){
+                        repeated_node.style.setProperty("--diameter", prev_diam + 'px');
+                        repeated_node.removeEventListener('transitionend', return_original_width);
+                    }
+                    repeated_node.addEventListener('transitionend', return_original_width);
+                    
+
+
+
+                    return;   
+                }
 
                 add_node(null, null, enteredText);
             }
@@ -294,12 +390,57 @@ function add_menu_functions(add_node_button, delete_button, save_button, load_bu
         load();
     });
 
+    info_button.addEventListener("click", () => {
+        document.querySelector(".help").style.display = "block";
+    });
+}
+
+
+
+function close_link_mode(){
+    canvas.classList.replace("canvas-alt", "canvas-default");
+    document.getElementById("Canvas_Text").innerText = "";
+
+    link_mode_on = false;
+
+    draw_bkg();
+    if (!simulating) toggle_physics(); //resume physics simulation
+}
+
+
+
+function move_all(dx, dy){
+    document.querySelectorAll(".node").forEach((node) => {
+        node.x += dx;
+        node.y += dy;
+        node.style.left = node.x + "px";
+        node.style.top = node.y + "px";
+        node.style.transform = 'translate(-50%, -50%)';
+    });
+    centro[0] += dx;
+    centro[1] += dy;
+    update_arrows();
 }
 
 
 
 
 
+function creates_loop(n_goal, n2, visited_nodes = new Set()) {
+    if (n_goal === n2) return true; // Loop detected
+
+    visited_nodes.add(n2);
+
+    for (let node of n2.connections) {
+        if (!visited_nodes.has(node)) {
+            if (creates_loop(n_goal, node, visited_nodes)) {
+                return true; // If a loop is found in recursion, propagate it
+            }
+        }
+    }
+ 
+    return false; // No loop found
+}
 
 
 
@@ -308,7 +449,7 @@ function add_menu_functions(add_node_button, delete_button, save_button, load_bu
 
 function print_nodes(){
     for(let i =0; i<nodes.length;i++){
-        console.log(nodes[i].style.transform);
+        console.log(nodes[i].classList);
     }
 }
 
@@ -370,3 +511,19 @@ function is_name_available(name){
     const bool = nodes.find(n => n.name === name)
     return (bool) ? false : true;
 } 
+
+
+function public_print(text){
+    document.getElementById("Canvas_Text").innerText = text;
+}
+
+
+function create_new_element(type, where_to_add = container, id = null, classes = []){
+    const element = document.createElement(type);
+    if (id) element.id = id;
+
+    classes.forEach(c => element.classList.add(c));
+
+    where_to_add.appendChild(element);
+    return element;
+}
