@@ -1,1 +1,0 @@
-win32gui.GetWindowPlacement(hwnd)

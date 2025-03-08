@@ -56,15 +56,14 @@ function add_onClick_function(node){
 
             if (origin_node.connections.includes(node)){ //if we clicked a node that was already connected, delete that connection
                 document.querySelectorAll(".arrow").forEach(arrow => {
-                    if (arrow.parent == origin_node && arrow.child == node) {arrow.remove(); print(arrow.child, node, arrow.child == node)};
+                    if (arrow.parent == origin_node && arrow.child == node) arrow.remove();
                 });                
                 let index = origin_node.connections.indexOf(node);
                 if (index !== -1) {
                     origin_node.connections.splice(index, 1);
                 }
-
                 update_colors(node, node.state, node.state);
-                update_colors(origin_node, node.state, node.state);
+                update_colors(origin_node, origin_node.state, origin_node.state);
 
                 return;
             }
@@ -177,11 +176,23 @@ function update_colors(node, old_state, new_state){
     //however, marking as done might be an error, so returning the node to uncompleted should return the dependancies to their original state
     // i will do that by just masking the dependencies instead of changing their states
     // if it goes back to uncompleted, remove the masks
-    if (node.connections.length != 0){
-        node_tree_search(node, (new_state=="completed") ? true:false);
-    }
+
+    // plan: search all nodes; if any of its parents is completed, mask them, otherwise, unmask
+
+    node_tree_search(node);
 }    
-function node_tree_search(node, apply_mask, visited_nodes = new Set()){
+
+function find_parents(node){
+    p = [];
+    document.querySelectorAll('.arrow').forEach(arrow => {
+        if(arrow.child === node){
+            p.push(arrow.parent);    
+        }
+    });
+    return p;
+}
+
+function node_tree_search(node, visited_nodes = new Set()){
     //check the tree of dependencies of the node
     // mask/remove mask and turn the arrows pointing to them the correct color
     //apply_mask = true -> make it green
@@ -189,27 +200,34 @@ function node_tree_search(node, apply_mask, visited_nodes = new Set()){
 
     visited_nodes.add(node);
 
-    node.connections.forEach(n => {
-        if (apply_mask) n.classList.add("complete-mask");
-        else n.classList.remove("complete-mask");
+    // if a node's parents are completed, mask the node, and remove the mask otherwise
+    const apply_mask = find_parents(node).filter(n => n.state==="completed").length != 0;
 
-        document.querySelectorAll(".arrow").forEach(arrow => {
-            if (arrow.child == n){
-                let line = arrow.querySelector(".line");
-                let tip = arrow.querySelector(".tip");
 
-                if (apply_mask){
-                    line.classList.add("line-mask");
-                    tip.classList.add("tip-mask");
-                } 
-                else {
-                    line.classList.remove("line-mask");
-                    tip.classList.remove("tip-mask");
-                }
+    if (apply_mask) node.classList.add("complete-mask");
+    else node.classList.remove("complete-mask");
+
+    document.querySelectorAll(".arrow").forEach(arrow => {
+        if (arrow.child == node){
+            let line = arrow.querySelector(".line");
+            let tip = arrow.querySelector(".tip");
+
+            if (apply_mask){
+                line.classList.add("line-mask");
+                tip.classList.add("tip-mask");
+            } 
+            else {
+                line.classList.remove("line-mask");
+                tip.classList.remove("tip-mask");
             }
-        });
-        if (!visited_nodes.has(n)) node_tree_search(n, apply_mask, visited_nodes);
+        }
     });
+    //the changes in the node's state may have propagated to other layers
+    node.connections.forEach(n => {
+        if (!visited_nodes.has(n)) node_tree_search(n, visited_nodes);
+    });
+    
+
     return;
 }
 
