@@ -13,7 +13,7 @@ let end_coords = [0,0];
 let dragged = false;
 
 const color_code = {dark_red: "171,28,33", 
-                    dark_green: "49,180,96", 
+                    dark_green: "49,180,96",
                     dark_purple: "50,0,100",
                     light_red: "204,119,136",
                     light_green: "132,221,145",
@@ -37,13 +37,9 @@ let centro = [canvas.width/2, canvas.height/2]; //centro do canvas, para onde os
 
 draw_bkg();
 
-// Funcionamento geral
-// Se uma seta aponta de x para y, então x precisa de y (y é pré-requisito de x)
-// Uma tarefa nao concluida mas que pode ser concluida (todas os seus pre-requisitos estão cumpridos) aparece com o contorno a tracejado
 
 
 /* TODO Coisas gráficas
-imagens para os botoes de load, save e help
 melhorar texto de ajuda com imagens
 */
 
@@ -357,7 +353,8 @@ canvas.addEventListener('mousedown', function(event) {
     start_dragging(event.clientX, event.clientY);
 
     //after the welcome message, any help from the title text disapears after a click
-    if (document.getElementById("Canvas_Text").innerText != "Welcome") public_print("");
+    const title = document.getElementById("Canvas_Text").innerText;
+    if (title != "Welcome" && !link_mode_on) public_print("");
 });
 
 

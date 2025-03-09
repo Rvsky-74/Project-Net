@@ -5,12 +5,10 @@
     <link rel="stylesheet" href="/idk.css">
 </head>
 
-<body>  
-    
-    
+<body>      
     <div class="canvas-container" id="canvas-container">
         <div class="info-holder">
-            <h1 class="canvas-title" id="Canvas_Text"> Welcomeee </h1>
+            <h1 class="canvas-title" id="Canvas_Text"> Welcome </h1>
         </div>
 
         <canvas id="circleCanvas" class="canvas-default" width="500px" height="500px"></canvas>
@@ -38,34 +36,31 @@
                 </button>
             </div>
             <p>
-                <span style = "font-size: 20px; font-weight: bold;">What is this app</span><br><br>
+                <span style = "font-size: 20px; font-weight: bold;">What is this app</span>
+                <br>
+                <br>
                 This is an organizer for large projects with a lot of dependencies. 
                 It allows the user to create a net of milestones for the bigger project and assign them as completed or not.
                 The user can then link the nodes to each other, so that an arrow points from a to b if b is a pre-requisite for a.
                 This helps to visualize the overall progress and focus on the correct goals, before starting something that needed another task done beforehand.
-                <br><br>
-                When a task is completed, the program marks as completed all tasks that were pre-requisites for the task. 
+                <br>
+                <br>
+                When a task is completed, the program assumes that all of its pre-requisites are completed so they are marked as green. 
                 If all pre-requisites for a task are completed, but not the task itself, the task is highlighted to indicate that it should now be focused on.
-
+                <br>
+                <br>
+                <span style = "font-size: 20px; font-weight: bold;">How to use</span>
+                <br>
+                <br>
+                To create a task, click the plus button on the side menu. After you name the task, it will show on the screen as a purple node. 
+                If you click on the node, you will have the option to mark the task as completed or not. 
+                There is also the option to start connection mode, where if you click on another node, an arrow will be drawn from the first to the second, representing that the second task must be completed first.
+                Click on a node already connected to delete the connection. 
+                Click outside any node to exit connection mode.
 
             </p>
         </div>
-
-
-        <div class="button-container">
-            <button onclick="print_nodes()">debug</button>
-            <button onclick="setup_nodes()">predefined</button>
-        </div>
-
     </div>    
-
-    <br>
-
-    
-
-    <br>
-
-
 
     <script src="/extras.js"></script>
     <script src="/main_script.js"></script>
