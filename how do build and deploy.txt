@@ -1,0 +1,10 @@
+in a git bash terminal
+
+npm run dev (open a live server for preview)
+npm run build
+npm run deploy
+
+
+the location of the deploy is in vite.config.js 
+
+what build and deploy do is defined in package.json

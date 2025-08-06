@@ -149,7 +149,7 @@ function update_colors(node, old_state, new_state){
     node.state = new_state;
 
     if (node.connections.length == 0){ //if the task depends on nothing
-        if (new_state != "completed") node.classList.replace("undoable", "doable");
+        if (new_state != "Completed") node.classList.replace("undoable", "doable");
     }
 
     document.querySelectorAll('.arrow').forEach(arrow => {
@@ -160,16 +160,16 @@ function update_colors(node, old_state, new_state){
             arrow.classList.replace(old_state, new_state);
 
             // how many uncompleted dependencies the node has. If it has none, it's now completable 
-            if ((arrow.parent.connections.filter(n => n.state === "uncompleted" || n.state === "default")).length == 0){ 
+            if ((arrow.parent.connections.filter(n => n.state === "Uncompleted" || n.state === "Default")).length == 0){ 
                 // in case the completable node is not done yet, ww should higlight it
-                if (arrow.parent.state != "completed") arrow.parent.classList.replace("undoable", "doable");
+                if (arrow.parent.state != "Completed") arrow.parent.classList.replace("undoable", "doable");
             } 
             else {
                 arrow.parent.classList.replace("doable", "undoable");
             }
         }
     });
-    if (node.state == "completed") node.classList.replace("doable", "undoable"); //no point in higlighting a completed node
+    if (node.state == "Completed") node.classList.replace("doable", "undoable"); //no point in higlighting a completed node
 
 
     //if a task was completed, its dependencies are probably also complete
@@ -201,7 +201,7 @@ function node_tree_search(node, visited_nodes = new Set()){
     visited_nodes.add(node);
 
     // if a node's parents are completed, mask the node, and remove the mask otherwise
-    const apply_mask = find_parents(node).filter(n => n.state==="completed").length != 0;
+    const apply_mask = find_parents(node).filter(n => n.state==="Completed").length != 0;
 
 
     if (apply_mask) node.classList.add("complete-mask");
@@ -496,13 +496,13 @@ function state_to_color(state, light = false){
 ***********************************************************************************************************************************/
     let color = "0,0,0";
     if (light){
-        color = (state === "completed") ? color_code["light_green"]:
-                        (state === "uncompleted") ? color_code["light_red"]:
+        color = (state === "Completed") ? color_code["light_green"]:
+                        (state === "Uncompleted") ? color_code["light_red"]:
                         color_code["light_purple"]; 
     }
     else{
-        color = (state === "completed") ? color_code["dark_green"]:
-                        (state === "uncompleted") ? color_code["dark_red"]:
+        color = (state === "Completed") ? color_code["dark_green"]:
+                        (state === "Uncompleted") ? color_code["dark_red"]:
                         color_code["dark_purple"]; 
     }
 

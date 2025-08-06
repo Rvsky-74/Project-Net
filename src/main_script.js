@@ -44,7 +44,10 @@ melhorar texto de ajuda com imagens
 */
 
 /* TODO Funcionalidades
+Multiplos saves (texto em cima passa a dizer em que save estamos)
 scroll to zoom (quando a visão está afastada nao mostrar o texto)
+opção de editar nome dos nodos
+opçao de eliminar nodos
 */
 
 
@@ -72,7 +75,7 @@ function add_node(x=null, y=null, name=null){
 
 
     const node = document.createElement("div");
-    node.classList.add("node", "default", "doable");
+    node.classList.add("node", "Default", "doable");
     node.style.left = (x!=null) ? x + "px" : Math.random()*canvas.width + "px";
     node.style.top = (y!=null) ? y + "px" : Math.random()*canvas.height + "px";    
    
@@ -80,7 +83,7 @@ function add_node(x=null, y=null, name=null){
 
     node.name = name;
     node.movimento = [0,0];
-    node.state = "default";
+    node.state = "Default";
     node.x = parseInt(node.style.left, 10);
     node.y = parseInt(node.style.top, 10);
 
@@ -100,7 +103,7 @@ function add_node(x=null, y=null, name=null){
 
 function createNode(name, x, y, state=null){
     const node = document.createElement("div");
-    node.classList.add("node", (state != null) ? state:"default", "doable");
+    node.classList.add("node", (state != null) ? state:"Default", "doable");
 
     node.x = x;
     node.y = y;
@@ -179,6 +182,7 @@ function open_options(n){
             Enquanto a caixa está aberta, física e arrastar ecrã estão desabilitados
             A caixa permite:
                 entrar no modo link, que permite fazer conexões
+                mudar o estado do nodo
 ***********************************************************************************************************************************/
     if (simulating) toggle_physics(); // stop physics simulation 
     box_opened = true;
@@ -191,7 +195,90 @@ function open_options(n){
     box.style.top = `${y}px`;
 
 
+    ///////// Estrutura acima da caixa principal para os botões de eliminar e editar nodo /////////
+    const sub_box = create_new_element("div", container, id = "sub-box", classes = ["sub-box", n.state]);
+    sub_box.style.left = `${x}px`;
+    sub_box.style.top = `${y}px`;
+
+
+    // Watch if the box was removed. If so, remove the sub-box as well
+    const observer = new MutationObserver((mutations) => {
+        for (const mutation of mutations) {
+            for (const node of mutation.removedNodes) {
+                if (node === box) {
+                    sub_box.remove();
+        }}}});
+    observer.observe(container, {childList: true});             
+
     
+    // botões acima da caixa de opções
+    const delete_node_button = create_new_element("button", sub_box, null, classes = ["button"])
+    const dnb_icon = create_new_element("div", delete_node_button, null, ["icon"])
+    dnb_icon.style.maskImage = "url(cross.svg)"
+    delete_node_button.addEventListener("click", (event)=> {
+        // Apagar conexões que terminam no nodo ou começam no nodo
+        document.querySelectorAll('.arrow').forEach(arrow => {
+            if (arrow.child === n || arrow.parent === n) arrow.remove()
+        })
+
+        // Atualizar lista de conexões e estado doable/not doable dos parents
+        parents = find_parents(n)
+        parents.forEach(p => {
+            idx = p.connections.indexOf(n)
+            p.connections.splice(idx,1) // remove 1 elemento no indice onde está o nodo (remove o nodo da lista de conecções)
+
+            // how many uncompleted dependencies the node now has. If it has none, it's now completable 
+            if ((p.connections.filter(n => n.state === "Uncompleted" || n.state === "Default")).length == 0){ 
+                if (arrow.parent.state != "Completed") arrow.parent.classList.replace("undoable", "doable");
+            }
+        })
+        n.remove()
+    });
+    
+
+    const edit_node_button = create_new_element("button", sub_box, null, classes = ["button"])
+    const enb_icon = create_new_element("div", edit_node_button, null, ["icon"])
+    enb_icon.style.maskImage = "url(pencil.svg)"
+    edit_node_button.addEventListener("click", (event)=>{
+        const textElement = n.querySelector(".text")
+        const previous_name = textElement.textContent // save this in case we cancel the operation
+        
+        const input = document.createElement("input");
+        input.type = "text";
+        input.value = textElement.textContent;
+        textElement.textContent = ""; // Clear existing text so it doesnt overlap while writing the new one
+
+        input.className = "text"
+
+        textElement.appendChild(input);
+        input.focus();
+
+        // If we press enter or click out of the text, confirm changes and delete the input box
+        input.addEventListener("keydown", function (event) {
+            if (event.key === "Enter") {
+                if (input.value != ""){
+                    textElement.textContent = input.value;
+                    n.name = input.value
+                    input.remove()
+                }
+                else public_print("Please enter a name for the node")
+            }
+            // If we press esc, cancel and go back to the previous name
+            if (event.key === "Escape"){
+                textElement.textContent = previous_name
+                input.remove()
+            }
+        });
+        input.addEventListener("blur", function () {
+            if (input.value != ""){
+                textElement.textContent = input.value;
+                n.name = input.value
+                input.remove()
+            }
+        });
+    })
+
+
     ////////////////// Botão para mudar estado ///////////////////
 
     // Estrutura contendo o botão e o texto descritivo
@@ -199,7 +286,7 @@ function open_options(n){
 
     // Texto
     const text = create_new_element("div", first_line, null, classes=["state-text"]);
-    text.textContent = (n.state === "default") ? "undefined" : n.state;
+    text.textContent = (n.state === "Default") ? "Undefined" : n.state;
 
     // Botão de mudança de estado
     const toggle_state = create_new_element("button", first_line, null, classes=["rounded-square-btn", n.state]);
@@ -209,19 +296,18 @@ function open_options(n){
     toggle_state.addEventListener("click", (event)=>{
         toggle_state.classList.toggle("active");
 
-        const new_state = (n.state === "default" || 
-                           n.state === "uncompleted") ? 
-                           "completed" : "uncompleted";
+        const new_state = (n.state === "Default" || 
+                           n.state === "Uncompleted") ? 
+                           "Completed" : "Uncompleted";
 
         box.classList.replace(n.state, new_state);
+        sub_box.classList.replace(n.state, new_state);        
         toggle_state.classList.replace(n.state, new_state);
         n.classList.replace(n.state, new_state);
         text.textContent = new_state;
-        
 
         update_colors(n, n.state, new_state);
     }); 
-
 
 
 
@@ -244,6 +330,7 @@ function open_options(n){
         public_print("Select pre-requisites for this task");
     });
 }
+
 
 
 
