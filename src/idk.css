@@ -88,6 +88,16 @@ html, body {
     overflow: hidden; /* Ensures content outside gets clipped */
 }
 
+.icon {
+    width: 100%;
+    height: 100%;
+
+    mask-repeat: no-repeat;
+    mask-size: 80%;
+    mask-position: center;
+}
+
+
 /* .center {
     position: absolute;
     top: 50%;
@@ -288,9 +298,22 @@ html, body {
         outline-color: black;
         outline-width: 2px;
     }
+
+
+.input-box {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%,-50%);
+
+    padding: 8px;
+    font-size: 16px;
+
+    border: 1px solid black;
+    border-radius: 5px;
+    outline: none;
+}
 /*****************************************************************************/
-
-
 
 
 
@@ -661,4 +684,118 @@ html, body {
             background-color: #777;
         }
 
+/*********************************************************************/
+
+
+
+/************************** Save files *******************************/
+
+.save-files-menu {
+    position: absolute;
+    top: 20%;
+    left: 30%;
+
+    width: 40%;
+    max-height: 50%;
+    
+    background-color: #555;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center; 
+    gap: 10px;
+
+    overflow-y: auto;
+
+    border: solid #555 10px;
+    background-clip: border-box;
+    border-radius: 15px;
+
+    /* Hide scrollbar visually but keep scroll functionality */
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE/Edge */
+}
+    .save-files-menu::-webkit-scrollbar {
+        display: none; /* Chrome, Safari, Opera */
+    }
+
+.save-file {
+    opacity: 0.6;
+
+    width: 100%;
+    height: 10vh;
+
+    flex-shrink: 0; /* prevents shrinking when more save files are added */
+
+    background-color: #E4E4E4;
+    border-radius: 5px;
+
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+
+    padding: 5px;
+
+    border: none;  /*To prevent the outline from being a button*/
+}
+    .save-file:hover{
+        opacity: 1;
+    }
+
+.save-number{
+    width: 20%;
+    aspect-ratio: 1;
+
+    background-color: #aaa;
+
+    border-radius: 5px;
+
+    display: flex;
+    justify-content: center;  /* horizontal center */
+    align-items: center;      /* vertical center */
+
+    font-size: 8vh;           /* This value will change because of fitTexttoDiv() in extra.js */
+    font-weight: bold;
+    color: #555;
+}
+
+.file-name {
+    width: 100%;
+    aspect-ratio: 1;
+
+    background-color: #aaa;
+
+    border-radius: 5px;
+
+    display: flex;
+    justify-content: center;  /* horizontal center */
+    align-items: center;      /* vertical center */
+
+    font-size: clamp(12px, 4vh, 40px); /* min, preferred, max */
+    color: #555;
+    text-align: center;
+}
+
+.edit-save-file {
+    width: 5%;
+    aspect-ratio: 1;
+
+    background-color: #aaa;
+
+    border-radius: 5px;
+
+    display: flex;
+    justify-content: center;  /* horizontal center */
+    align-items: center;      /* vertical center */
+
+
+    mask-repeat: no-repeat;
+    mask-size: 80%;
+    mask-position: center;
+
+    margin-right: 5px;
+}
+    .edit-save-file:hover{
+        background-color: black;
+    }
 /*********************************************************************/

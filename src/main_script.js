@@ -1,37 +1,36 @@
+import {
+    add_highlight_function,
+    add_onClick_function,
+    update_arrows,
+    update_colors,
+    find_parents,
+    add_menu_functions,
+    close_link_mode,
+    print,
+    getTranslateValues,
+    is_name_available,
+    public_print,
+    create_new_element,
+    toggle_physics,
+    draw_bkg,
+    update_nodes
+} from './extras.js'
+
+import {
+    globals
+} from './variables.js'
+
+
+
+
 const canvas = document.getElementById('circleCanvas');
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
-const ctx = canvas.getContext('2d');
 const container = document.getElementById("canvas-container");
-const nodes = [];
 
 
-let isMouseDown = false;
-let start_coords = [0,0];
-let end_coords = [0,0];
-let dragged = false;
 
-const color_code = {dark_red: "171,28,33", 
-                    dark_green: "49,180,96",
-                    dark_purple: "50,0,100",
-                    light_red: "204,119,136",
-                    light_green: "132,221,145",
-                    light_purple: "122,102,162"    
-                    };
-
-                    
-let box_opened = false; //when a details box is opened, disable dragging the screen
-let link_mode_on = false; //while this mode is on, clicking on a node will link the origin node to it
-let origin_node = null;
-let keep_box = false;
-
-
-let bkg_x_off = 0; //variaveis globais onde guardo a "localização do background"
-let bkg_y_off = 0;
-
-
-let centro = [canvas.width/2, canvas.height/2]; //centro do canvas, para onde os nodos vão ser atraidos
 
 
 
@@ -41,302 +40,28 @@ draw_bkg();
 
 /* TODO Coisas gráficas
 melhorar texto de ajuda com imagens
+save files (botao de apagar ficar vermelho no hover, botao de editar e apagar maiores)
 */
 
 /* TODO Funcionalidades
-Multiplos saves (texto em cima passa a dizer em que save estamos)
+Multiplos saves (confirmar overwrite file)
 scroll to zoom (quando a visão está afastada nao mostrar o texto)
-opção de editar nome dos nodos
-opçao de eliminar nodos
+botao para focar a imagem no centro de massa, para nao correr o risco de afastar a camara de tudo
 */
 
+/* TODO Otimizaçoes
+Parar de usar nodes (talvez nao, melhor investigar)
+parar de usar color codes (acho que o css é suficiente)
+passar codigo para ingles
+*/
 
-
-
-
-
-function add_node(x=null, y=null, name=null){
-/**********************************************************************************************************************************
-    Recebe: 
-            (x,y) -> coordenadas do novo nodo no canvas (caso sejam fornecidas; caso contrário, são aleatórias)
-    Retorna:
-            Adiciona um nodo à lista "nodes", com as propriedades:
-                - Lista "connections" (inicialmente vazia)
-                - Posição (aleatória ou especificada)
-                - Raio fixo e opacidade
-                - Nome a partir do texto da caixa de entrada acima do canvas
-                - Cor que começa como roxa e vai mudar dependendo do estado do nodo
-***********************************************************************************************************************************/
-
-    //check if name already exists, if so place a plus in front
-    while (!is_name_available(name)){
-        name += '+';
-    }
-
-
-    const node = document.createElement("div");
-    node.classList.add("node", "Default", "doable");
-    node.style.left = (x!=null) ? x + "px" : Math.random()*canvas.width + "px";
-    node.style.top = (y!=null) ? y + "px" : Math.random()*canvas.height + "px";    
-   
-    node.connections = [];
-
-    node.name = name;
-    node.movimento = [0,0];
-    node.state = "Default";
-    node.x = parseInt(node.style.left, 10);
-    node.y = parseInt(node.style.top, 10);
-
-    container.appendChild(node);
-    nodes.push(node); 
-
-    add_highlight_function(node);
-    add_onClick_function(node);
-
-    const text = document.createElement("div");
-    text.className = "text";
-    text.textContent = name;
-    node.appendChild(text);
-
-    if (!simulating) toggle_physics();
-}
-
-function createNode(name, x, y, state=null){
-    const node = document.createElement("div");
-    node.classList.add("node", (state != null) ? state:"Default", "doable");
-
-    node.x = x;
-    node.y = y;
-    node.name = name;
-    if (state) node.state = state;
-    node.connections = [];
-
-    node.movimento = [0,0];
-
-    node.style.top = y + 'px';
-    node.style.left = x + 'px';
-
-    container.appendChild(node);
-    nodes.push(node); 
-
-    add_highlight_function(node);
-    add_onClick_function(node);
-
-    const text = document.createElement("div");
-    text.className = "text";
-    text.textContent = name;
-    node.appendChild(text);
-}
-
-
-
-function draw_bkg(x_ofset = 0, y_ofset = 0){    
-/**********************************************************************************************************************************
-    Recebe:
-            x_ofset, y_ofset -> Deslocamentos no plano para redesenhar o grid
-    Retorna:
-            Desenha o grid de fundo no canvas
-***********************************************************************************************************************************/
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    function drawCross(x, y){
-        const cross_size = 3;
-        const color = "rgba(0,0,0,0.3)";
-        ctx.beginPath();
-        ctx.moveTo(x-cross_size, y);
-        ctx.lineTo(x+cross_size, y);
-        ctx.moveTo(x, y-cross_size);
-        ctx.lineTo(x, y+cross_size);
-        ctx.strokeStyle = color;
-        ctx.lineWidth = 1;
-        ctx.stroke();
-    }
-    if (!link_mode_on){
-        const step = 20;
-        let x_off = x_ofset + bkg_x_off;
-        let y_off = y_ofset + bkg_y_off;
-        while (x_off > step/2) x_off -= step;
-        while (x_off < -step/2) x_off += step;
-        while (y_off > step/2) y_off -= step;
-        while (y_off < -step/2) y_off += step;
-        for (let i = x_off; i <= canvas.width + x_off; i+=step){
-            for (let j = y_off; j <= canvas.height + y_off; j+=step){
-                drawCross(i, j);
-            } 
-        }
-    }
-}
-
-
-
-
-
-
-
-function open_options(n){
-/**********************************************************************************************************************************
-    Recebe:
-            n -> nodo que foi clicado
-    Retorna:
-            Abre a caixa de opções para o nodo
-            Enquanto a caixa está aberta, física e arrastar ecrã estão desabilitados
-            A caixa permite:
-                entrar no modo link, que permite fazer conexões
-                mudar o estado do nodo
-***********************************************************************************************************************************/
-    if (simulating) toggle_physics(); // stop physics simulation 
-    box_opened = true;
-    [x, y] = [n.x, n.y];
-
-
-    ///////// Criar a caixa onde vão estar os botões /////////
-    const box = create_new_element("div", container, id = "box", classes = ["box", n.state]);
-    box.style.left = `${x}px`;
-    box.style.top = `${y}px`;
-
-
-    ///////// Estrutura acima da caixa principal para os botões de eliminar e editar nodo /////////
-    const sub_box = create_new_element("div", container, id = "sub-box", classes = ["sub-box", n.state]);
-    sub_box.style.left = `${x}px`;
-    sub_box.style.top = `${y}px`;
-
-
-    // Watch if the box was removed. If so, remove the sub-box as well
-    const observer = new MutationObserver((mutations) => {
-        for (const mutation of mutations) {
-            for (const node of mutation.removedNodes) {
-                if (node === box) {
-                    sub_box.remove();
-        }}}});
-    observer.observe(container, {childList: true});             
-
-    
-    // botões acima da caixa de opções
-    const delete_node_button = create_new_element("button", sub_box, null, classes = ["button"])
-    const dnb_icon = create_new_element("div", delete_node_button, null, ["icon"])
-    dnb_icon.style.maskImage = "url(cross.svg)"
-    delete_node_button.addEventListener("click", (event)=> {
-        // Apagar conexões que terminam no nodo ou começam no nodo
-        document.querySelectorAll('.arrow').forEach(arrow => {
-            if (arrow.child === n || arrow.parent === n) arrow.remove()
-        })
-
-        // Atualizar lista de conexões e estado doable/not doable dos parents
-        parents = find_parents(n)
-        parents.forEach(p => {
-            idx = p.connections.indexOf(n)
-            p.connections.splice(idx,1) // remove 1 elemento no indice onde está o nodo (remove o nodo da lista de conecções)
-
-            // how many uncompleted dependencies the node now has. If it has none, it's now completable 
-            if ((p.connections.filter(n => n.state === "Uncompleted" || n.state === "Default")).length == 0){ 
-                if (arrow.parent.state != "Completed") arrow.parent.classList.replace("undoable", "doable");
-            }
-        })
-        n.remove()
-    });
-    
-
-    const edit_node_button = create_new_element("button", sub_box, null, classes = ["button"])
-    const enb_icon = create_new_element("div", edit_node_button, null, ["icon"])
-    enb_icon.style.maskImage = "url(pencil.svg)"
-    edit_node_button.addEventListener("click", (event)=>{
-        const textElement = n.querySelector(".text")
-        const previous_name = textElement.textContent // save this in case we cancel the operation
-        
-        const input = document.createElement("input");
-        input.type = "text";
-        input.value = textElement.textContent;
-        textElement.textContent = ""; // Clear existing text so it doesnt overlap while writing the new one
-
-        input.className = "text"
-
-        textElement.appendChild(input);
-        input.focus();
-
-        // If we press enter or click out of the text, confirm changes and delete the input box
-        input.addEventListener("keydown", function (event) {
-            if (event.key === "Enter") {
-                if (input.value != ""){
-                    textElement.textContent = input.value;
-                    n.name = input.value
-                    input.remove()
-                }
-                else public_print("Please enter a name for the node")
-            }
-            // If we press esc, cancel and go back to the previous name
-            if (event.key === "Escape"){
-                textElement.textContent = previous_name
-                input.remove()
-            }
-        });
-        input.addEventListener("blur", function () {
-            if (input.value != ""){
-                textElement.textContent = input.value;
-                n.name = input.value
-                input.remove()
-            }
-        });
-    })
-
-
-    ////////////////// Botão para mudar estado ///////////////////
-
-    // Estrutura contendo o botão e o texto descritivo
-    const first_line = create_new_element("div", box, null, ["button-text-wrapper"]);
-
-    // Texto
-    const text = create_new_element("div", first_line, null, classes=["state-text"]);
-    text.textContent = (n.state === "Default") ? "Undefined" : n.state;
-
-    // Botão de mudança de estado
-    const toggle_state = create_new_element("button", first_line, null, classes=["rounded-square-btn", n.state]);
-    const inner_circle = create_new_element("div", toggle_state, null, classes=["small-circle"]);
-
-    // Funcionalidade de mudar de estado
-    toggle_state.addEventListener("click", (event)=>{
-        toggle_state.classList.toggle("active");
-
-        const new_state = (n.state === "Default" || 
-                           n.state === "Uncompleted") ? 
-                           "Completed" : "Uncompleted";
-
-        box.classList.replace(n.state, new_state);
-        sub_box.classList.replace(n.state, new_state);        
-        toggle_state.classList.replace(n.state, new_state);
-        n.classList.replace(n.state, new_state);
-        text.textContent = new_state;
-
-        update_colors(n, n.state, new_state);
-    }); 
-
-
-
-    ////////////////// Botão para ativar modo de ligações ///////////////////
-    const second_line = create_new_element("div", box); 
-
-    const make_connections = create_new_element("button", second_line, id="b1", classes=["link-button"]);  
-    make_connections.textContent = "Make Connections";
-    make_connections.addEventListener("click", (event)=>{
-        // Inicia o modo de selecionar ligações
-        link_mode_on = true;
-        origin_node = n;
-        draw_bkg();
-
-        box.remove();
-        box_opened = false;
-
-        // make it visually obvious that we are in connection mode
-        canvas.classList.replace("canvas-default", "canvas-alt"); 
-        public_print("Select pre-requisites for this task");
-    });
-}
 
 
 
 
 
 let menu_opened = false;
-function menu(){
+export function menu(){
 /**********************************************************************************************************************************
     Recebe: ---
     Retorna:
@@ -405,13 +130,16 @@ window.addEventListener("resize", () => {
     draw_bkg();
 });
 
+
 let hold_timeout;  
 document.addEventListener("click", (event) => {
-    isMouseDown = false;
+
+    globals.isMouseDown = false
+
     clearInterval(hold_timeout);
 
     // stop link mode when we click outside a node
-    if (link_mode_on && !event.target.closest(".node") && !event.target.closest(".box") && !dragged) {close_link_mode(); draw_bkg();};
+    if (globals.link_mode_on && !event.target.closest(".node") && !event.target.closest(".box") && !globals.dragged) {close_link_mode(); draw_bkg();};
 
     // if the input box was opened and we 
     // clicked neither in it nor in the button to create it, delete the input box
@@ -419,62 +147,75 @@ document.addEventListener("click", (event) => {
         document.querySelector(".input-box").remove();
     }
 
+    // If we opened the save files menu and clicked outside it or outside the button to create it, close it
+    // The * in .matches refers to the classes child objects
+    if (document.querySelector(".save-files-menu") && !(event.target.matches(".save-files-menu, .save-files-menu *") || event.target.matches("#loadbutton, #loadbutton *") || event.target.matches("#savebutton, #savebutton *"))){
+        document.querySelector(".save-files-menu").remove();
+    }
+
+
     //if we clicked outside the info box, close it 
     if (!event.target.closest("#box")) {
         document.querySelectorAll("#box").forEach(element => element.remove());
-        box_opened = false;      
-        
-        if (!simulating && !link_mode_on) toggle_physics();
+        globals.box_opened = false;       
+        if (!globals.simulating && !globals.link_mode_on) toggle_physics();
     }
 
-    if (dragged){ 
+    if (globals.dragged){ 
         update_nodes();
+        // Reset the movement related coords
+        globals.start_coords = [0,0];
+        globals.end_coords = [0,0];
     }
-    start_coords = end_coords;
 
+    //after the welcome message, any help from the title text disapears after a click
+    const title = document.getElementById("Canvas_Text").innerText;
+    if (title != "Welcome" && !globals.link_mode_on) public_print(globals.current_save_file);
 });
 
 
 
 canvas.addEventListener('mousedown', function(event) {
-    start_dragging(event.clientX, event.clientY);
+    globals.isMouseDown = true;
 
-    //after the welcome message, any help from the title text disapears after a click
-    const title = document.getElementById("Canvas_Text").innerText;
-    if (title != "Welcome" && !link_mode_on) public_print("");
+    globals.start_coords = [event.clientX, event.clientY];
+    globals.end_coords = [event.clientX, event.clientY];
+
+    globals.nodes.forEach((node) => {
+        node.initialTranslate = getTranslateValues(node);
+    });
+    document.querySelectorAll(".arrow").forEach((arrow) => {
+        arrow.initialTranslate = getTranslateValues(arrow);
+    });
 });
 
 
 
-let previously_inside = false;
-let x = 0;
-let y = 0;
+
+
+
+
 canvas.addEventListener('mousemove', function(event) {
     const rect = canvas.getBoundingClientRect();
 
-    [x, y] = [event.clientX - rect.left, event.clientY - rect.top];
+    if (globals.isMouseDown && !globals.box_opened) { //dragging the map, only possible when there is no opened info box
 
+        globals.end_coords = [event.clientX - rect.left, event.clientY - rect.top];
 
-
-    if (isMouseDown && !box_opened) { //dragging the map, only possible when there is no opened info box
-
-        end_coords = [event.clientX - rect.left, event.clientY - rect.top];
-
-        const dx = end_coords[0] - start_coords[0];
-        const dy = end_coords[1] - start_coords[1];
+        const dx = globals.end_coords[0] - globals.start_coords[0];
+        const dy = globals.end_coords[1] - globals.start_coords[1];
 
 
         // Translate nodes and connections         
         // This is only a visual change, it doesnt affect the actual position of the nodes
-        nodes.forEach((node) => {
+        globals.nodes.forEach((node) => {
             const initial = node.initialTranslate;
             node.style.transform = `translate(${initial.x + dx}px, ${initial.y + dy}px)`;
         });
         update_arrows(dx,dy);
 
-
-        draw_bkg(x_ofset=dx, y_ofset=dy);
-        dragged = true;
+        draw_bkg(dx, dy);
+        globals.dragged = true;
 
         return;
     }
@@ -484,113 +225,5 @@ canvas.addEventListener('mousemove', function(event) {
 
 
 
-let simulating = false; 
-let intervalId; // Necessário para criar um ciclo interrompível
-function toggle_physics(){
-/**********************************************************************************************************************************
-    Recebe: ---
-    Retorna:
-            Começa a animação/simulação fisica dos nodos:
-                nodos nao relacionados afastam-se
-                nodos relacionados tentam manter uma distância fixa
-                nestrutura tenta manter-se no centro do canvas
-***********************************************************************************************************************************/
 
-
-    if (simulating){ //stop the simulation
-        simulating = false;
-        clearInterval(intervalId);
-    }
-    else{
-        simulating = true; //if this function is called again, physics simulation should stop
-        intervalId = setInterval(() => { //setInterval calls physics() at regular intervals
-            physics();
-          }, 9); //tempo entre chamadas à função em ms
-    }
-
-    function physics(){
-        const deltaT = 0.01;
-        const x0 = 50;
-        const junction_strength = 0.2;
-        const repel_strength = 200000;
-        const center_force = 30;
-
-        for (let i = 0; i<nodes.length; i++){
-            nodes[i].movimento = [0,0];
-        }
-
-        for (let i = 0; i<nodes.length; i++){ // calcular a resultante das forças no nodo e guardar em movivento
-            n0 = nodes[i];
-
-            for (let j = 0; j<nodes.length; j++){
-                if (j!=i){
-                    n1 = nodes[j];
-
-                    let dist = Math.sqrt((n0.x - n1.x)**2 + (n0.y - n1.y)**2); 
-
-                    if(dist < 20){ //limitar a força de repulsão para evitar que os nodos expludam
-                        dist = 20;  
-                    } 
-                    
-                    vetor_diff = [(n1.x - n0.x)/dist, (n1.y - n0.y)/dist] //vetor de n0 para n1, normalizado
-                    
-                    
-                    if (n0.connections.includes(n1)){ //if the 2 nodes are related            
-                    // act like a spring that tends to a relaxation length x0
-                        const displacement = dist - x0; // quando é: negativo -> afastam-se | positivo -> atraem-se 
-                        n0.movimento[0] += vetor_diff[0]*displacement*junction_strength;
-                        n0.movimento[1] += vetor_diff[1]*displacement*junction_strength;
-
-                        n1.movimento[0] -= vetor_diff[0]*displacement*junction_strength;
-                        n1.movimento[1] -= vetor_diff[1]*displacement*junction_strength;
-                    }
-                    else{ 
-                    // unrelated nodes repel with a force proportional to their distance
-                        n0.movimento[0] -= vetor_diff[0]*repel_strength/ ((dist**2));
-                        n0.movimento[1] -= vetor_diff[1]*repel_strength/ ((dist**2));
-                    }
-                }
-
-                //all nodes should be atracted to the center of the screen
-                // centro = [canvas.width/2, canvas.height/2];
-                const norm = Math.sqrt(n0.x**2 + n0.y**2);
-                vetor_centro = [(centro[0] - n0.x)/norm, (centro[1] - n0.y)/norm];
-                n0.movimento[0] += vetor_centro[0]*center_force;
-                n0.movimento[1] += vetor_centro[1]*center_force;
-      
-            }
-        }
-
-        let is_there_movement = false
-        // atualizar a posição de cada nodo de acordo com a sua resultante das forças (movimento)
-        document.querySelectorAll(".node").forEach((node) => {
-            node.x += node.movimento[0]*deltaT;
-            node.y += node.movimento[1]*deltaT;
-
-            if (isMouseDown){
-                node.initialTranslate.x += node.movimento[0]*deltaT;
-                node.initialTranslate.y += node.movimento[1]*deltaT;
-            }
-            const position_matrix = getTranslateValues(node);
-            node.style.transform = `translate(${position_matrix.x + node.movimento[0]*deltaT}px, ${position_matrix.y + node.movimento[1]*deltaT}px)`;
-
-            
-            if (node.movimento[0]**2 + node.movimento[1]**2 > 16){ 
-                //parar se nenhuma particula se mexer a mais de 4 pixeis/s
-                is_there_movement = true;
-            }
-        });
-        const dx = (dragged) ? end_coords[0] - start_coords[0] : 0;
-        const dy = (dragged) ? end_coords[1] - start_coords[1] : 0;
-        update_arrows(dx, dy);
-    }
-}
-
-
-
-
-
-
-
-
-
+window.menu = menu // For some reason this is necessary
