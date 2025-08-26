@@ -741,6 +741,9 @@ html, body {
     .save-file:hover{
         opacity: 1;
     }
+    .save-file.no-hover:hover {
+        opacity: 0.6; /* cancels the hover effect */
+    }
 
 .save-number{
     width: 20%;
@@ -798,4 +801,69 @@ html, body {
     .edit-save-file:hover{
         background-color: black;
     }
+/*********************************************************************/
+
+
+
+/************************* Confirmations *******************************/
+.confirmation-box {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+
+    width: 35%;
+    height: 25%;
+    
+    background-color: #E4E4E4;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center; 
+    gap: 10px;
+
+    overflow-y: auto;
+
+    border: solid #777 10px;
+    border-radius: 15px;
+}
+.confirmation-text {
+    width: 100%;
+    height: 40%;
+
+    border-radius: 5px;
+
+    display: flex;
+    flex-direction: row;
+    align-items: center; 
+    justify-content: center;
+
+    gap: 20%;
+
+    font-size: clamp(12px, 4vh, 4vh); /* min, preferred, max */
+    color: #555;
+    text-align: center;
+
+    white-space: pre-line; /* Makes \n work properly */
+}
+
+.option {
+    height: 100%;
+    aspect-ratio: 1;
+
+    border-radius: 5px;
+
+    background-color: #aaa;
+
+    display: flex;
+    align-items: center; 
+    justify-content: center;
+}
+    .option:hover{
+        outline: solid #555 5px;
+        cursor: pointer;
+    }
+
+
+
 /*********************************************************************/

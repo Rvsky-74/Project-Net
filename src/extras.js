@@ -11,16 +11,9 @@ import {
 
 
 const canvas = document.getElementById('circleCanvas');
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
 const container = document.getElementById("canvas-container");
-
-
-const color_code = {dark_red: "171,28,33", 
-                    dark_green: "49,180,96",
-                    dark_purple: "50,0,100",
-                    light_red: "204,119,136",
-                    light_green: "132,221,145",
-                    light_purple: "122,102,162"    
-                    };
 
 
 
@@ -34,29 +27,27 @@ export function add_highlight_function(node){
 
     //fade all nodes except the one being hovered
     node.addEventListener('mouseenter', function(event){
-        const elements = document.querySelectorAll('.node');
-        elements.forEach(element => {
+        globals.nodes.forEach(element => {
             element.style.setProperty('--alpha', 0.3); 
         });
         node.style.setProperty('--alpha', 1);
 
         node.style.setProperty("--diameter", 1.2 * prev_width + 'px');
 
-        document.querySelectorAll('.arrow').forEach(element => {
+        globals.arrows.forEach(element => {
             if(!(element.parent === node)) element.style.setProperty('--alpha', 0.3); 
         });
     });
 
     //turn all nodes back to normal when no longer hovering
     node.addEventListener('mouseleave', function(event){
-        const elements = document.querySelectorAll('.node');
-        elements.forEach(element => {
+        globals.nodes.forEach(element => {
             element.style.setProperty('--alpha', 1); 
             element.style.setProperty("--diameter", prev_width + 'px');
 
         });
 
-        document.querySelectorAll('.arrow').forEach(element => {
+        globals.arrows.forEach(element => {
             element.style.setProperty('--alpha', 1); 
         });
     });
@@ -67,8 +58,7 @@ export function add_highlight_function(node){
 export function add_onClick_function(node){
     node.addEventListener('click', function(event){
         event.stopPropagation();
-        if (globals.link_mode_on){ //a connection was selected
-            
+        if (globals.link_mode_on){ // A connection was selected            
             let is_connection_valid = origin_node != node && //a node cant depend on itself
                                       !(origin_node.connections.includes(node)) && //avoid assigning same node multiple times
                                       !(node.connections.includes(origin_node)); //double dependancies make no sense in this context
@@ -85,14 +75,14 @@ export function add_onClick_function(node){
                 return;
             }
 
-            if (origin_node.connections.includes(node)){ //if we clicked a node that was already connected, delete that connection
-                document.querySelectorAll(".arrow").forEach(arrow => {
+            if (origin_node.connections.includes(node)){ // If we clicked a node that was already connected, delete that connection 
+                globals.arrows.forEach(arrow => { //TODO use find instead of this
                     if (arrow.parent == origin_node && arrow.child == node) arrow.remove();
                 });                
-                let index = origin_node.connections.indexOf(node);
-                if (index !== -1) {
-                    origin_node.connections.splice(index, 1);
-                }
+
+                let index = origin_node.connections.indexOf(node); //TODO maybe pop works as well and more readable?
+                origin_node.connections.splice(index, 1); // Remove the connection from the connections list of the origin node
+
                 update_colors(node, node.state, node.state);
                 update_colors(origin_node, origin_node.state, origin_node.state);
 
@@ -122,10 +112,16 @@ export function create_arrow(parent, child){
     arrow.child = child;
 
     update_arrow_render(arrow);
+
+
+    // These objects will be accessed frequently, so its better to 
+    // save them in an array instead of using querySelector multiple times, 
+    // which needs to access the DOM and becomes slower
+    globals.arrows.push(arrow) 
 }
 
 export function update_arrows(dx=0, dy=0){
-    document.querySelectorAll('.arrow').forEach(element => {
+    globals.arrows.forEach(element => {
         update_arrow_render(element, dx, dy);
     });
 }
@@ -183,7 +179,7 @@ export function update_colors(node, old_state, new_state){
         if (new_state != "Completed") node.classList.replace("undoable", "doable");
     }
 
-    document.querySelectorAll('.arrow').forEach(arrow => {
+    globals.arrows.forEach(arrow => {
         if(arrow.child === node){ 
             is_pointed_to = true;
             
@@ -215,7 +211,7 @@ export function update_colors(node, old_state, new_state){
 
 export function find_parents(node){
     const p = [];
-    document.querySelectorAll('.arrow').forEach(arrow => {
+    globals.arrows.forEach(arrow => {
         if(arrow.child === node){
             p.push(arrow.parent);    
         }
@@ -238,7 +234,7 @@ export function node_tree_search(node, visited_nodes = new Set()){
     if (apply_mask) node.classList.add("complete-mask");
     else node.classList.remove("complete-mask");
 
-    document.querySelectorAll(".arrow").forEach(arrow => {
+    globals.arrows.forEach(arrow => {
         if (arrow.child == node){
             let line = arrow.querySelector(".line");
             let tip = arrow.querySelector(".tip");
@@ -416,9 +412,10 @@ async function save_file_menu(type){
 
     // Prevent creating duplicates of the menu
     const is_opened = document.querySelector(".save-files-menu")
-    if (is_opened) return
+    if (is_opened) is_opened.remove() // Refresh the menu, because maybe we changed from load to save menu
 
-    // Now, show the save_files in the menu div
+
+    // Create the menu where the save files will be displayed
     const menu = create_new_element("div", container, null, ["save-files-menu"])
 
 
@@ -432,8 +429,6 @@ async function save_file_menu(type){
         const sfname = create_new_element("div", sf, null, ["file-name"])
         sfnum.textContent = num
         sfname.textContent = name
-
-
 
         const editsf = create_new_element("button", sf, null, ["edit-save-file"])
         editsf.style.maskImage = "url(pencil.svg)";
@@ -455,13 +450,17 @@ async function save_file_menu(type){
                 input.addEventListener("keydown", (event) => {
                     //If enter is pressed, confirm change in name
                     if (event.key === "Enter" && input.value.trim() !== "") {
-                        sfname.textContent = input.value.trim();
+                        const new_name = input.value.trim()
+                        sfname.textContent = new_name;
                         isEditing = false;
                         editsf.style.maskImage = "url(pencil.svg)";
                         
-                        modify_save_file(num, input.value.trim())
+                        modify_save_file(num, new_name)
+                        globals.current_save_file = new_name
+                        public_print(new_name)
 
                         sf.replaceChild(sfname, input);
+
                     }
                     // Esc means the operation is canceled
                     if (event.key === "Escape") {
@@ -473,8 +472,8 @@ async function save_file_menu(type){
             } 
             
             else {
-                // Second click on the edit save_file button: delete the save file
-                await modify_save_file(num, "")
+            // Second click on the edit save_file button: delete the save file
+                await modify_save_file(num, "") // Calling this function with an empty string deletes the save file
 
                 // Refresh the menu
                 menu.remove();
@@ -484,14 +483,33 @@ async function save_file_menu(type){
 
 
         sf.addEventListener("click", function(event){
-            if (type === "save"){ // meaning this a save menu
-                saveNodeData(num, name)
-            } 
-            else{ // this is a loading menu
-                globals.current_save_file = name
-                load(num)
-            }
             menu.remove()
+
+            const conf_box = create_new_element("div", container, null, ["confirmation-box"])
+            
+            const conf_text = create_new_element("p", conf_box, null, ["confirmation-text"])
+            conf_text.textContent = (type == "save") ? "Do you want to overwritte\n\"" + name + "\"" : "Are you sure? The current net will not be saved automatically"
+            
+            const opt_holder = create_new_element("div", conf_box, null, ["confirmation-text"])
+            const option_yes = create_new_element("div", opt_holder, null, ["option"])
+            option_yes.textContent = "Yes"
+            const option_no = create_new_element("div", opt_holder, null, ["option"])
+            option_no.textContent = "No"
+
+            option_yes.addEventListener("click", function(event){
+                conf_box.remove()
+                if (type === "save"){ // meaning this a save menu
+                    saveNodeData(num, name)
+                } 
+                else{ // this is a loading menu
+                    globals.current_save_file = name
+                    load(num)
+                    centro =  [canvas.width/2, canvas.height/2]; // Reset center of mass, so the nodes dont fly off 
+                }
+            }); 
+            option_no.addEventListener("click", function(event){
+                conf_box.remove()
+            })
         });
     });
 
@@ -530,8 +548,9 @@ async function save_file_menu(type){
         });
     }
 
+    // If there are no saved files and we try to load one
     if (type == "load" && save_files.length == 0) {
-        const sf = create_new_element("button", menu, null, ["save-file"])
+        const sf = create_new_element("button", menu, null, ["save-file", "no-hover"])
         const sfname = create_new_element("div", sf, null, ["file-name"])
         sfname.textContent = "No save files yet"
     }
@@ -582,9 +601,10 @@ export function open_options(n){
     const delete_node_button = create_new_element("button", sub_box, null, ["button"])
     const dnb_icon = create_new_element("div", delete_node_button, null, ["icon"])
     dnb_icon.style.maskImage = "url(cross.svg)"
+
     delete_node_button.addEventListener("click", (event)=> {
         // Apagar conexões que terminam no nodo ou começam no nodo
-        document.querySelectorAll('.arrow').forEach(arrow => {
+        globals.arrows.forEach(arrow => {
             if (arrow.child === n || arrow.parent === n) arrow.remove()
         })
 
@@ -723,7 +743,7 @@ export function move_all(dx, dy){
 // This function is used to focus the screen on a specific point
 // Currently used only to focus on a node when we try to create one with the same name 
 
-    document.querySelectorAll(".node").forEach((node) => {
+    globals.nodes.forEach((node) => {
         node.x += dx;
         node.y += dy;
         node.style.left = node.x + "px";
@@ -797,8 +817,9 @@ export function add_node(x=null, y=null, name=null, state="Default"){
         name += '+';
     }
 
+
     const node = document.createElement("div");
-    node.classList.add("node", "Default", "doable");
+    node.classList.add("node", state, "doable");
     node.style.left = (x!=null) ? x + "px" : Math.random()*canvas.width + "px";
     node.style.top = (y!=null) ? y + "px" : Math.random()*canvas.height + "px";    
    
@@ -858,12 +879,10 @@ export function toggle_physics(){
         const repel_strength = 200000;
         const center_force = 30;
 
-        for (let i = 0; i<globals.nodes.length; i++){
-            globals.nodes[i].movimento = [0,0];
-        }
 
         for (let i = 0; i<globals.nodes.length; i++){ // calcular a resultante das forças no nodo e guardar em movivento
             const n0 = globals.nodes[i];
+            n0.movimento = [0,0];
 
             for (let j = 0; j<globals.nodes.length; j++){
                 if (j!=i){
@@ -895,7 +914,6 @@ export function toggle_physics(){
                 }
 
                 //all nodes should be atracted to the center of the screen
-                // centro = [canvas.width/2, canvas.height/2];
                 const norm = Math.sqrt(n0.x**2 + n0.y**2);
                 const vetor_centro = [(centro[0] - n0.x)/norm, (centro[1] - n0.y)/norm];
                 n0.movimento[0] += vetor_centro[0]*center_force;
@@ -905,7 +923,7 @@ export function toggle_physics(){
         }
         
         // atualizar a posição de cada nodo de acordo com a sua resultante das forças (movimento)
-        document.querySelectorAll(".node").forEach((node) => {
+        globals.nodes.forEach((node) => {
             node.x += node.movimento[0]*deltaT;
             node.y += node.movimento[1]*deltaT;
 
@@ -918,8 +936,7 @@ export function toggle_physics(){
 
         });
 
-
-
+        // Update arrow positions, but account for the fact that the screen might be moved mid simulation (dx,dy != 0)
         const dx = globals.end_coords[0] - globals.start_coords[0];
         const dy = globals.end_coords[1] - globals.start_coords[1];
         update_arrows(dx,dy);
@@ -983,11 +1000,10 @@ export function update_nodes(){
     centro[0] += dx;
     centro[1] += dy;
 
-    draw_bkg(0,0);
+    draw_bkg();
     globals.dragged = false;
 
-    // update the position of the nodes for access by other elements
-    document.querySelectorAll(".node").forEach((node) => {
+    globals.nodes.forEach((node) => {
         node.x += dx;
         node.y += dy;
         node.style.left = node.x + "px";
@@ -1026,30 +1042,7 @@ export function print(...args) {
     });
 }
 
-export function state_to_color(state, light = false){
-/**********************************************************************************************************************************
-    Recebe:
-            state -> string do conjunto: completed, uncompleted, default
-            (light) -> bool indicativo de se querer a cor escura ou a clara. 
-                        Por default pretende-se a cor escura (light = false)
-    Retorna:
-            color -> string reconhecida pelo css como uma cor
-***********************************************************************************************************************************/
-    let color = "0,0,0";
-    if (light){
-        color = (state === "Completed") ? color_code["light_green"]:
-                        (state === "Uncompleted") ? color_code["light_red"]:
-                        color_code["light_purple"]; 
-    }
-    else{
-        color = (state === "Completed") ? color_code["dark_green"]:
-                        (state === "Uncompleted") ? color_code["dark_red"]:
-                        color_code["dark_purple"]; 
-    }
 
-    return `rgb(${color})`;
-}
-    
 
 
 export function getTranslateValues(element) {
@@ -1060,8 +1053,8 @@ export function getTranslateValues(element) {
 
 
 export function delete_all(){
-    document.querySelectorAll(".node").forEach(element => element.remove());
-    document.querySelectorAll(".arrow").forEach(element => element.remove());
+    globals.nodes.forEach(element => element.remove());
+    globals.arrows.forEach(element => element.remove());
     globals.nodes.length = 0;
 }
 

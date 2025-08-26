@@ -1,14 +1,9 @@
 import {
-    add_highlight_function,
-    add_onClick_function,
     update_arrows,
-    update_colors,
-    find_parents,
     add_menu_functions,
     close_link_mode,
     print,
     getTranslateValues,
-    is_name_available,
     public_print,
     create_new_element,
     toggle_physics,
@@ -22,15 +17,11 @@ import {
 
 
 
-
 const canvas = document.getElementById('circleCanvas');
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
 const container = document.getElementById("canvas-container");
-
-
-
 
 
 
@@ -40,18 +31,14 @@ draw_bkg();
 
 /* TODO Coisas gráficas
 melhorar texto de ajuda com imagens
-save files (botao de apagar ficar vermelho no hover, botao de editar e apagar maiores)
 */
 
 /* TODO Funcionalidades
-Multiplos saves (confirmar overwrite file)
 scroll to zoom (quando a visão está afastada nao mostrar o texto)
 botao para focar a imagem no centro de massa, para nao correr o risco de afastar a camara de tudo
 */
 
 /* TODO Otimizaçoes
-Parar de usar nodes (talvez nao, melhor investigar)
-parar de usar color codes (acho que o css é suficiente)
 passar codigo para ingles
 */
 
@@ -71,7 +58,7 @@ export function menu(){
 ***********************************************************************************************************************************/
     menu_opened = !menu_opened;
     
-    if (!menu_opened){ //if we closed the menu
+    if (!menu_opened){ //if we closed the menu, do the closing animation ("reverse")
         const object = document.querySelectorAll(".menu-dropdown").forEach(element => {
             element.addEventListener("animationend", (event) => {
                 element.remove();
@@ -81,7 +68,6 @@ export function menu(){
         });
         return;
     }
-
 
     const menu_dropdown = create_new_element("div", container, null, ["menu-dropdown", "animate"]);
 
@@ -114,9 +100,7 @@ export function menu(){
     menu_dropdown.style.height = `${dropdown_height}px`;
 
 
-    add_menu_functions(add_node_button, delete_button, save_button, load_button, info_button);
-    
-    
+    add_menu_functions(add_node_button, delete_button, save_button, load_button, info_button);   
 
 }
 
@@ -153,6 +137,9 @@ document.addEventListener("click", (event) => {
         document.querySelector(".save-files-menu").remove();
     }
 
+    // If we asked for confirmation and clicked outside the box, assume no for an answer (do nothing) and close the box
+    if (document.querySelector(".confirmation-box") && !(event.target.matches(".confirmation-box, .confirmation-box *") || event.target.matches(".save-files-menu, .save-files-menu *"))) document.querySelector(".confirmation-box").remove()
+
 
     //if we clicked outside the info box, close it 
     if (!event.target.closest("#box")) {
@@ -176,17 +163,19 @@ document.addEventListener("click", (event) => {
 
 
 canvas.addEventListener('mousedown', function(event) {
-    globals.isMouseDown = true;
+    if (event.button === 0) { // Left mouse click
+        globals.isMouseDown = true;
 
-    globals.start_coords = [event.clientX, event.clientY];
-    globals.end_coords = [event.clientX, event.clientY];
+        globals.start_coords = [event.clientX, event.clientY];
+        globals.end_coords = [event.clientX, event.clientY];
 
-    globals.nodes.forEach((node) => {
-        node.initialTranslate = getTranslateValues(node);
-    });
-    document.querySelectorAll(".arrow").forEach((arrow) => {
-        arrow.initialTranslate = getTranslateValues(arrow);
-    });
+        globals.nodes.forEach((node) => {
+            node.initialTranslate = getTranslateValues(node);
+        });
+        globals.arrows.forEach((arrow) => {
+            arrow.initialTranslate = getTranslateValues(arrow);
+        });
+    }
 });
 
 

@@ -2,7 +2,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/11.3.1/firebas
 import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.3.1/firebase-auth.js";
 import { getFirestore, doc, setDoc, getDoc, collection, getDocs, deleteDoc, updateDoc} from "https://www.gstatic.com/firebasejs/11.3.1/firebase-firestore.js";
 
-import {delete_all, add_node, update_colors} from "./extras.js"
+import {delete_all, add_node, update_colors, create_arrow} from "./extras.js"
 import {globals} from "./variables.js"
 
 const firebaseConfig = {
@@ -57,17 +57,14 @@ function login(){
 // Save the node net to a save slot
 export async function saveNodeData(slot_number, slot_name) {
   const user = auth.currentUser;
-  const text = document.getElementById("Canvas_Text");
-
-
-  // save relevant info for the nodes
-  const node_save_list = [];
-  const node_list = document.querySelectorAll(".node");
-
-  node_list.forEach((n) => {
+  
+  
+  const node_save_list = []; // Store relevant data here
+  
+  globals.nodes.forEach((n) => {
     const conn = n.connections || [];
     const connection_list = conn.map(c => c.name);
-   
+    
     node_save_list.push({
       name: n.name, 
       x: n.getBoundingClientRect().left, 
@@ -76,15 +73,20 @@ export async function saveNodeData(slot_number, slot_name) {
       connections: connection_list
     });
   });
-
-  // Save to subcollection: users/{uid}/saves/{saveSlot}
+  
+  // Save to subcollection: users/{user-id}/saves/{saveSlot}
   const userRef = doc(db, "users", user.uid, "saves", String(slot_number));
   const userData = {
     name: slot_name,
     node_info: node_save_list
   };
+  
+  // Write this data to the database. 
+  // merge: True means it wont rewrite other entries, 
+  // which isnt relevant for now since these are the only 2 things in each save file
+  await setDoc(userRef, userData, { merge: true }); 
 
-  await setDoc(userRef, userData, { merge: true }); // merge: True means it wont rewrite other entries, which isnt relevant for now since these are the only 2 things in each save file
+  const text = document.getElementById("Canvas_Text");
   text.innerText = "Data Saved";
 }
 
@@ -128,7 +130,7 @@ onAuthStateChanged(auth, (user) => {
 
     saveUserData(); // Save general data and update last login date on the database
 
-  } else {
+  } else {  
     console.log("No user is logged in");
     log_button.innerText = "Login";
 
@@ -237,3 +239,4 @@ export async function modify_save_file(sf_num, new_name){
 }
 
 
+window.login = login

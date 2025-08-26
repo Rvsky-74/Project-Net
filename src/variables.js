@@ -1,39 +1,11 @@
 // Here, i'll keep global variables that can be changed by both files
 
-// export const nodes = [];
-
-// let link_mode_on = false; // while this mode is on, clicking on a node will link the origin node to it
-// let simulating = false;
-// let isMouseDown = false;
-
-
-// export function get_global(variable){
-//     if (variable === "simulating"){
-//         return simulating
-//     }
-//     if (variable === "link_mode_on"){
-//         return link_mode_on
-//     }
-//     if (variable === "isMouseDown"){
-//         return isMouseDown
-//     }
-// }
-
-// export function set_global(variable, value){
-//     if (variable === "simulating"){
-//         simulating = value
-//     }
-//     if (variable === "link_mode_on"){
-//         link_mode_on = value
-//     }
-//     if (variable === "isMouseDown"){
-//         isMouseDown = value
-//     }
-// }
 
 
 export const globals = {
-    nodes: [],
+    nodes: [], // Instead of looping through the DOM every time i need the nodes, keep them in an array for faster access
+    arrows: [], // Same thing but for the arrows connecting nodes
+    
     link_mode_on: false,
     simulating: false,
     isMouseDown: false,
