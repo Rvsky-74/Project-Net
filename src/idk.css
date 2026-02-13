@@ -37,7 +37,18 @@ html, body {
 
 
 
+.test-point {
+    width: 10px;
+    height: 10px;
 
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    border-radius: 10px;
+
+    transform: translate(-50%,-50%);
+    background-color: black;
+}
 
 
 /************************* Canvas Elements *************************/
@@ -61,6 +72,8 @@ html, body {
     background-color: #E4E4E4;
     border: solid;
     border-color: #555;
+
+    z-index: 10;
 }
     .canvas-title {
         position: relative;
@@ -85,7 +98,7 @@ html, body {
 
     border: none;
     clip-path: inset(0px 0px 4px 0px); /*necessary for the clip box to be correctly aligned*/
-    overflow: hidden; /* Ensures content outside gets clipped */
+    overflow: hidden; /* Ensures content outside gets clipped */    
 }
 
 .icon {
@@ -96,48 +109,6 @@ html, body {
     mask-size: 80%;
     mask-position: center;
 }
-
-
-/* .center {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-
-    width: 30px;
-    aspect-ratio: 1;
-
-
-    background-color: black;
-}
-.test-button {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-
-    width: 30px;
-    aspect-ratio: 1;
-    border-radius: 5px;
-
-    border: none;
-    outline: solid;
-    outline-color: rgba(200, 200, 200, 1);
-}
-.test-button .icon {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 30px;
-    height: 30px;
-
-    background-color: #777;
-    mask-image: url(trash.svg);
-    mask-repeat: no-repeat;
-    mask-size: 28px;
-    mask-position: 60%;
-}*/
 
 
 .button-container {
@@ -312,6 +283,8 @@ html, body {
     border: 1px solid black;
     border-radius: 5px;
     outline: none;
+
+    z-index: 5;
 }
 /*****************************************************************************/
 
@@ -367,6 +340,8 @@ html, body {
     border: solid;
     border-width: 5px;
     border-color: var(--dark-color);
+
+    z-index: 8;
 }
 
 .link-button {
@@ -466,30 +441,42 @@ html, body {
     position: absolute;
 
     background-color: rgba(var(--light-color-raw), var(--alpha, 1));
-    
+
     outline: solid;
     outline-width: 3px;
     outline-color: rgba(var(--dark-color-raw), var(--alpha, 1));
 
-    transform: translate(-50%, -50%);
+    transform: translate(0,0);
     transition: width 0.3s ease-in-out; /* In order to make size increases smooth, while keeping everything else responsive */
+
+    z-index: 1;
 }
 .node .text {
     pointer-events: none;
 
     --size: 14px;
-    width: 100px;
-    position: absolute;
-    color: black;  /* Text color */
+    --margin: 2px;
+    width: fit-content;
+    
+    color: #444;  /* Text color */
+    font-weight: bold;
     font-size: var(--size); /* Adjust as needed */
     text-align: center;
-    top: calc(var(--diameter) / 2 + var(--size)); /* Places text right below the node */
+    
+    position: absolute;
+    top: calc(var(--diameter) / 2 + var(--size) + var(--margin)); /* Places text right below the node */
     left: 50%;
     transform: translateX(-50%);
 
-    background: transparent;
-    outline: none;
+    border-radius: 3px;
+    background: #E4E4E4;
+    opacity: calc(var(--alpha) - 0.2);
+    outline: solid 2px black;
     border: none;
+
+    padding: 1px 4px;
+
+    z-index: inherit;
 }
 
 .undoable {
@@ -513,37 +500,38 @@ html, body {
 /**************************** Connections Elements ****************************/
 .arrow {
     position: absolute;
-    --alpha: 1;
+    --alpha: 0.9;
     top: 0px;
     left: 0px;
-}
-.arrow .tip {
-    --rotation: 0deg;
-    --border-thickness: 3px;
-    top: 0px;
-    left: 0px;
-    width: 5px;
-    height: 5px;
-    border-top: var(--border-thickness) solid black;
-    border-right: var(--border-thickness) solid black;
-    border-color: rgba(var(--dark-color-raw), var(--alpha));
-
-    position: absolute;
-    
+    z-index: 0;
 }
 .arrow .line {
     position: absolute;
     top: 0px;
     left: 0px;
-    height: 2px; /* Line thickness */
+    height: 3px; /* Line thickness */
     transform-origin: left; 
     background-color: rgba(var(--dark-color-raw), var(--alpha));
+
+    z-index: inherit;
 } 
+.arrow .tip {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    
+    width: 9px;
+    height: 9px;
+    
+    background-color: rgba(var(--dark-color-raw), var(--alpha));
+    z-index: inherit;
+}
+
 .line-mask {
     background-color: rgba(49,180,96, var(--alpha)) !important; 
 }
 .tip-mask {
-    border-color: rgba(49,180,96, var(--alpha)) !important;
+    background-color: rgba(49,180,96, var(--alpha)) !important;
 }
 /*********************************************************************/
 
@@ -557,6 +545,7 @@ html, body {
     left: 0;
     --img-size: 60px;
     --margin: 15px;
+    z-index: 10;
 }
     #login-container button {
         position: absolute;
@@ -714,6 +703,8 @@ html, body {
     /* Hide scrollbar visually but keep scroll functionality */
     scrollbar-width: none; /* Firefox */
     -ms-overflow-style: none; /* IE/Edge */
+
+    z-index: 8;
 }
     .save-files-menu::-webkit-scrollbar {
         display: none; /* Chrome, Safari, Opera */
@@ -826,6 +817,8 @@ html, body {
 
     border: solid #777 10px;
     border-radius: 15px;
+
+    z-index: 8;
 }
 .confirmation-text {
     width: 100%;

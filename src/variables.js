@@ -11,6 +11,8 @@ export const globals = {
     isMouseDown: false,
     dragged: false,
 
+    clickingNode: null,
+
     start_coords: [0,0],
     end_coords: [0,0],
 

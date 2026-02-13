@@ -21,7 +21,6 @@ let origin_node;
 let centro =  [canvas.width/2, canvas.height/2]; // centro de massa para onde os nodos vão ser atraidos
 
 
-
 export function add_highlight_function(node){
     const prev_width = parseInt(window.getComputedStyle(node).getPropertyValue('width').slice(0,2));
 
@@ -56,8 +55,19 @@ export function add_highlight_function(node){
 
 
 export function add_onClick_function(node){
+
+    node.addEventListener('mousedown', (event)=>{
+        globals.clickingNode = node; // store the info that we are clicking a specific node in order to drag it
+        // Capture the node's current position before dragging starts
+        node._dragStartX = node.x;
+        node._dragStartY = node.y;
+        node._dragOffsetX = 0;
+        node._dragOffsetY = 0;
+    })
+
     node.addEventListener('click', function(event){
         event.stopPropagation();
+
         if (globals.link_mode_on){ // A connection was selected            
             let is_connection_valid = origin_node != node && //a node cant depend on itself
                                       !(origin_node.connections.includes(node)) && //avoid assigning same node multiple times
@@ -89,9 +99,14 @@ export function add_onClick_function(node){
                 return;
             }
         }
-        if (!globals.box_opened && !globals.link_mode_on){ //to prevent opening multiple boxes at the same time
+        if (!globals.clickingNode && !globals.box_opened && !globals.link_mode_on){ //to prevent opening multiple boxes at the same time
             open_options(node);
         }
+
+        if (globals.clickingNode){
+            globals.clickingNode = null;
+        }
+        
     });
 }
 
@@ -100,9 +115,7 @@ export function create_arrow(parent, child){
     arrow.classList.add("arrow", child.state);
     container.appendChild(arrow);
 
-    const tip = document.createElement("div");
-    tip.className = "tip";
-    arrow.appendChild(tip);
+    const tip = create_new_element("div", arrow, null, ["tip"]);
 
     const line = document.createElement("div");
     line.className = "line";   
@@ -126,45 +139,54 @@ export function update_arrows(dx=0, dy=0){
     });
 }
 
+
 export function update_arrow_render(arrow, off_x=0, off_y=0){
     const tip = arrow.querySelector('.tip');
     const line = arrow.querySelector('.line');
 
-
     const child = {x: arrow.child.x, y: arrow.child.y};
     const parent = {x: arrow.parent.x, y: arrow.parent.y};
-
     
     const dx = child.x - parent.x;
     const dy = child.y - parent.y;
 
-    let angle = Math.atan2(dy, dx);
+    let angle = Math.atan2(dy, dx); // between -pi and pi
+    if (angle < 0) angle += 2*Math.PI // normalize to [0,2PI]
     let distance = Math.sqrt(dx * dx + dy * dy);
 
-    // small fixes, no ideas why they are needed
-    if (angle < Math.PI/2){ 
-        angle -=0.01;
-    }
-    if (angle < -Math.PI/2){ 
-        angle +=0.01;
-    }
 
+    // The diam of a node is 21. We could use getComputedValues() to get it but that function is slow
+    const node_radius = 10.5
+    const margin = 3
 
-    const styles = getComputedStyle(arrow.parent);
-    const radius = parseInt(styles.getPropertyValue('--diameter').slice(0,2))/2;
-    const tip_height = Math.sqrt(50)/2; //because the tip is a square with side 5
-    const lines_thickness = 3;
 
     
-    const tip_x = (child.x - (radius+tip_height+2*lines_thickness) * dx/distance);
-    const tip_y = (child.y - (radius+tip_height+2*lines_thickness) * dy/distance);
-    tip.style.transform = `translate(-50%, -50%) translate(${tip_x + off_x}px,${tip_y + off_y}px) rotate(${angle + Math.PI/4}rad)`;
+    // const tip_x = (child.x - (radius+tip_height+2*lines_thickness) * dx/distance);
+    // const tip_y = (child.y - (radius+tip_height+2*lines_thickness) * dy/distance);
+    const tip_x = (child.x + node_radius - (node_radius + 3*margin) * Math.cos(angle));
+    const tip_y = (child.y + node_radius - (node_radius + 3*margin) * Math.sin(angle));
+
+    tip.style.transform = `translate(-50%,-50%) translate(${tip_x + off_x}px,${tip_y + off_y}px) rotate(${angle+Math.PI/4}rad)`;
 
 
-    line.style.width = (distance - 2*radius - 3*lines_thickness - tip_height) + 'px';
-    const line_x = (parent.x + (radius+2*lines_thickness) * Math.cos(angle));
-    const line_y = (parent.y + (radius+2*lines_thickness) * Math.sin(angle));   
-    line.style.transform = `translate(${line_x + off_x}px,${line_y + off_y}px) rotate(${angle}rad)`;
+
+
+
+    // The line should be have its x and y in the parent node's edge
+    // The width is actually the distance between the nodes
+    // And the direction is then applied with a transform
+    line.style.width = (distance - 2*node_radius - 4*margin) + 'px';
+    const line_x = (parent.x + node_radius + (node_radius + margin) * Math.cos(angle));
+    const line_y = (parent.y + node_radius + (node_radius + margin) * Math.sin(angle));   
+
+    // Also, the line has a thickness (2px for now) that causes a misalignement
+    // To compensate, translate 1 pixel to the orthogonal direction of the line
+    const thickness = 0.5
+    const x_correction =  thickness*Math.sin(angle)
+    const y_correction = -thickness*Math.cos(angle)
+    line.style.transform = `translate(${line_x + x_correction + off_x}px,${line_y + y_correction + off_y}px) rotate(${angle}rad)`;
+
+    //TODO a linha precisa de algo equivalente a translate(-50%,-50%) porque agora está a alinhar com o lado da linha, nao com o centro
 }
 
 
@@ -227,9 +249,9 @@ export function node_tree_search(node, visited_nodes = new Set()){
 
     visited_nodes.add(node);
 
-    // if a node's parents are completed, mask the node, and remove the mask otherwise
-    const apply_mask = find_parents(node).filter(n => n.state==="Completed").length != 0;
-
+    // if any of the node's parents is completed, the node must have been completed as well, so mask the node. 
+    // Otherwise, remove the mask
+    const apply_mask = find_parents(node).filter(n => (n.state==="Completed" || n.classList.contains("complete-mask"))).length != 0;
 
     if (apply_mask) node.classList.add("complete-mask");
     else node.classList.remove("complete-mask");
@@ -597,31 +619,47 @@ export function open_options(n){
     observer.observe(container, {childList: true});             
 
     
+
     // botões acima da caixa de opções
     const delete_node_button = create_new_element("button", sub_box, null, ["button"])
     const dnb_icon = create_new_element("div", delete_node_button, null, ["icon"])
     dnb_icon.style.maskImage = "url(cross.svg)"
 
     delete_node_button.addEventListener("click", (event)=> {
-        // Apagar conexões que terminam no nodo ou começam no nodo
+        // First, we will need to save the parents and children of the node before deleting it
+        const parents = find_parents(n)
+        const children = [...n.connections]
+        
+        
+        // Delete arrows that start or end in this node
         globals.arrows.forEach(arrow => {
-            if (arrow.child === n || arrow.parent === n) arrow.remove()
+            if (arrow.child === n || arrow.parent === n) arrow.remove() // This deletes them from the DOM
         })
-
-        // Atualizar lista de conexões e estado doable/not doable dos parents
-        parents = find_parents(n)
+        globals.arrows = globals.arrows.filter(a => (a.child !== n && a.parent !== n)) // This deletes them from the array
+        
+        // Now we can actually delete the node
+        globals.nodes = globals.nodes.filter(node => node !== n)
+        n.remove()
+        
+        // Update connections list and doable / not doable state from the parents
         parents.forEach(p => {
-            idx = p.connections.indexOf(n)
+            const idx = p.connections.indexOf(n)
             p.connections.splice(idx,1) // remove 1 elemento no indice onde está o nodo (remove o nodo da lista de conecções)
-
-            // how many uncompleted dependencies the node now has. If it has none, it's now completable 
+            
+            // How many uncompleted dependencies the node now has. If it has none, it's now completable 
             if ((p.connections.filter(n => n.state === "Uncompleted" || n.state === "Default")).length == 0){ 
-                if (arrow.parent.state != "Completed") arrow.parent.classList.replace("undoable", "doable");
+                if (p.state != "Completed") p.classList.replace("undoable", "doable");
             }
         })
-        n.remove()
+
+        // Now, we can update the child nodes, because maybe they were masked and now they shouldn't be
+        children.forEach(c => {
+            node_tree_search(c)
+        })
     });
     
+
+
 
     const edit_node_button = create_new_element("button", sub_box, null, ["button"])
     const enb_icon = create_new_element("div", edit_node_button, null, ["icon"])
@@ -740,6 +778,7 @@ export function close_link_mode(){
 
 
 export function move_all(dx, dy){
+    //TODO something wrong
 // This function is used to focus the screen on a specific point
 // Currently used only to focus on a node when we try to create one with the same name 
 
@@ -817,7 +856,6 @@ export function add_node(x=null, y=null, name=null, state="Default"){
         name += '+';
     }
 
-
     const node = document.createElement("div");
     node.classList.add("node", state, "doable");
     node.style.left = (x!=null) ? x + "px" : Math.random()*canvas.width + "px";
@@ -827,9 +865,15 @@ export function add_node(x=null, y=null, name=null, state="Default"){
 
     node.name = name;
     node.movimento = [0,0];
+    node.vx = 0;
+    node.vy = 0;
     node.state = state;
     node.x = parseInt(node.style.left, 10);
     node.y = parseInt(node.style.top, 10);
+
+    node.simTranslation = {x:0, y:0}
+    node.mouseTranslation = {x:0, y:0}
+    node.initialTranslation = {x:0, y:0}
 
     container.appendChild(node);
     globals.nodes.push(node); 
@@ -846,6 +890,7 @@ export function add_node(x=null, y=null, name=null, state="Default"){
 
     return node
 }
+
 
 
 
@@ -868,16 +913,24 @@ export function toggle_physics(){
     else{ // Otherwise start it
         globals.simulating = true
         intervalId = setInterval(() => { //setInterval calls physics() at regular intervals
+
+            if (globals.clickingNode){
+                globals.clickingNode.x += globals.clickingNode._dragOffsetX
+                globals.clickingNode.y += globals.clickingNode._dragOffsetY
+                globals.clickingNode._dragOffsetX = 0;
+                globals.clickingNode._dragOffsetY = 0;
+            }
             physics();
+
           }, 10); // Time between function calls in ms
     }
 
     function physics(){
         const deltaT = 0.01;
-        const x0 = 50;
-        const junction_strength = 0.2;
-        const repel_strength = 200000;
-        const center_force = 30;
+        const x0 = 100;
+        const junction_strength = 200;
+        const repel_strength = 100000;
+        const center_force = 0.5;
 
 
         for (let i = 0; i<globals.nodes.length; i++){ // calcular a resultante das forças no nodo e guardar em movivento
@@ -911,35 +964,47 @@ export function toggle_physics(){
                         n0.movimento[0] -= vetor_diff[0]*repel_strength/ ((dist**2));
                         n0.movimento[1] -= vetor_diff[1]*repel_strength/ ((dist**2));
                     }
-                }
-
-                //all nodes should be atracted to the center of the screen
-                const norm = Math.sqrt(n0.x**2 + n0.y**2);
-                const vetor_centro = [(centro[0] - n0.x)/norm, (centro[1] - n0.y)/norm];
-                n0.movimento[0] += vetor_centro[0]*center_force;
-                n0.movimento[1] += vetor_centro[1]*center_force;
-      
+                }      
             }
+            //all nodes should be atracted to the center of the screen
+            // const norm = Math.sqrt(n0.x**2 + n0.y**2);
+            // const vetor_centro = [(centro[0] - n0.x)/norm, (centro[1] - n0.y)/norm];
+            // const vetor_centro = [(centro[0] - n0.x), (centro[1] - n0.y)];
+            // n0.movimento[0] += vetor_centro[0]*center_force;
+            // n0.movimento[1] += vetor_centro[1]*center_force;
         }
         
         // atualizar a posição de cada nodo de acordo com a sua resultante das forças (movimento)
         globals.nodes.forEach((node) => {
-            node.x += node.movimento[0]*deltaT;
-            node.y += node.movimento[1]*deltaT;
+            node.vx += node.movimento[0]*deltaT;
+            node.vy += node.movimento[1]*deltaT;
+            node.vx *= 0.9; // Damping
+            node.vy *= 0.9;
 
-            if (globals.isMouseDown){
-                node.initialTranslate.x += node.movimento[0]*deltaT;
-                node.initialTranslate.y += node.movimento[1]*deltaT;
-            }
-            const position_matrix = getTranslateValues(node);
-            node.style.transform = `translate(${position_matrix.x + node.movimento[0]*deltaT}px, ${position_matrix.y + node.movimento[1]*deltaT}px)`;
+            node.x += node.vx*deltaT + 0.5*node.movimento[0]*deltaT*deltaT;
+            node.y += node.vy*deltaT + 0.5*node.movimento[1]*deltaT*deltaT;
 
+            node.simTranslation.x += node.vx*deltaT + 0.5*node.movimento[0]*deltaT*deltaT;
+            node.simTranslation.y += node.vy*deltaT + 0.5*node.movimento[1]*deltaT*deltaT;
+
+            node._dragStartX += node.vx*deltaT + 0.5*node.movimento[0]*deltaT*deltaT
+            node._dragStartY += node.vy*deltaT + 0.5*node.movimento[1]*deltaT*deltaT
+
+            const total_translation_x = node.mouseTranslation.x + node.initialTranslation.x + node.simTranslation.x
+            const total_translation_y = node.mouseTranslation.y + node.initialTranslation.y + node.simTranslation.y
+
+            node.style.transform = `translate(${total_translation_x}px, ${total_translation_y}px)`;            
         });
 
         // Update arrow positions, but account for the fact that the screen might be moved mid simulation (dx,dy != 0)
-        const dx = globals.end_coords[0] - globals.start_coords[0];
-        const dy = globals.end_coords[1] - globals.start_coords[1];
+        let dx = 0;
+        let dy = 0;
+        if (!globals.clickingNode){
+            dx = globals.end_coords[0] - globals.start_coords[0];
+            dy = globals.end_coords[1] - globals.start_coords[1];
+        }
         update_arrows(dx,dy);
+        update_nodes();
     }
 }
 
@@ -991,8 +1056,12 @@ export function draw_bkg(x_ofset = 0, y_ofset = 0){
 
 
 export function update_nodes(){
+// This is called after a dragging of the screen
+
     const dx = globals.end_coords[0] - globals.start_coords[0];
     const dy = globals.end_coords[1] - globals.start_coords[1]; 
+
+    globals.start_coords = globals.end_coords 
 
     bkg_x_off += dx;
     bkg_y_off += dy;
@@ -1004,11 +1073,16 @@ export function update_nodes(){
     globals.dragged = false;
 
     globals.nodes.forEach((node) => {
+        // Update the nodes' position
         node.x += dx;
         node.y += dy;
         node.style.left = node.x + "px";
-        node.style.top = node.y + "px";
-        node.style.transform = 'translate(-50%, -50%)';
+        node.style.top = node.y + "px"; 
+
+        // Reset Translations
+        node.style.transform = 'translate(0,0)';
+        node.mouseTranslation = {x:0,y:0};
+        node.simTranslation = {x:0,y:0}
     });
 }
 

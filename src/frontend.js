@@ -123,6 +123,7 @@ onAuthStateChanged(auth, (user) => {
     const photoURL = user.photoURL;
     const img = document.getElementById("profile-pic");
     img.src = photoURL;
+    console.log(photoURL)
 
     img.onerror = function() {
       img.src = 'no-user.png'; // Fallback image in case we cant get the user's profile pic
@@ -139,6 +140,7 @@ onAuthStateChanged(auth, (user) => {
     
     delete_all();
   }   
+  load(1)
 });   
 
 
