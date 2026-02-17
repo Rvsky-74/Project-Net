@@ -290,6 +290,8 @@ html, body {
 
 
 
+
+
 /************************* Toggle button Elements *************************/
 .rounded-square-btn {
     width: 30px;          
@@ -434,6 +436,9 @@ html, body {
 /**************************** Nodes ****************************/
 .node {
     --diameter: 21px;
+    --tx: 0;
+    --ty: 0;
+    --scale: 21;
 
     width: var(--diameter);
     aspect-ratio: 1;
@@ -442,14 +447,16 @@ html, body {
 
     background-color: rgba(var(--light-color-raw), var(--alpha, 1));
 
+    transform: translate(var(--tx), var(--ty));
+    transform-origin: center;
+    transition: width 0.5s ease-in-out; /* In order to make size increases smooth, while keeping everything else responsive */
+    
     outline: solid;
     outline-width: 3px;
     outline-color: rgba(var(--dark-color-raw), var(--alpha, 1));
 
-    transform: translate(0,0);
-    transition: width 0.3s ease-in-out; /* In order to make size increases smooth, while keeping everything else responsive */
-
     z-index: 1;
+    will-change: transform;
 }
 .node .text {
     pointer-events: none;
@@ -491,6 +498,28 @@ html, body {
     outline-color: rgb(49,180,96);
     outline-style: solid;
 }
+
+
+
+/* Hover optimization styles */
+#canvas-container.dimmed .node {
+    --alpha: 0.3;
+}
+#canvas-container.dimmed .arrow {
+    --alpha: 0.3;
+}
+#canvas-container .node.hovered {
+    --alpha: 1;
+}
+#canvas-container .arrow.highlight {
+    --alpha: 1;
+}
+/* Use stored --base-diameter for hover enlargement fallback */
+/* #canvas-container .node.hovered { */
+    /* If JS sets --diameter inline, that wins; this is a fallback */
+    /* --diameter: 205; */
+/* } */
+
 /*********************************************************************/
 
 
@@ -504,27 +533,46 @@ html, body {
     top: 0px;
     left: 0px;
     z-index: 0;
+    will-change: transform;
 }
 .arrow .line {
+    --tx: 0;
+    --ty: 0;
+    --scale: 1;
+    --rotation: 0;
+
     position: absolute;
     top: 0px;
     left: 0px;
+    width: 100px; /* Base unit for scaleX transform */
     height: 3px; /* Line thickness */
+
     transform-origin: left; 
+    transform: translate(var(--tx), var(--ty)) rotate(var(--rotation)) scaleX(var(--scale));
+
+
     background-color: rgba(var(--dark-color-raw), var(--alpha));
 
     z-index: inherit;
+    will-change: transform;
 } 
 .arrow .tip {
+    --tx: 0;
+    --ty: 0;
+    --rotation: 0;
+
     position: absolute;
     top: 0px;
     left: 0px;
     
     width: 9px;
     height: 9px;
+
+    transform: translate(-50%,-50%) translate(var(--tx),var(--ty)) rotate(var(--rotation));
     
     background-color: rgba(var(--dark-color-raw), var(--alpha));
     z-index: inherit;
+    will-change: transform;
 }
 
 .line-mask {

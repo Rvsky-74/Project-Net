@@ -12,6 +12,11 @@ export const globals = {
     dragged: false,
 
     clickingNode: null,
+    nodeInitialPosition: {x: 0, y: 0},
+
+    _dragOffsetX: 0,
+    _dragOffsetY: 0,
+
 
     start_coords: [0,0],
     end_coords: [0,0],

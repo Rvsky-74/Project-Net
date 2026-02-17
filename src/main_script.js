@@ -3,7 +3,6 @@ import {
     add_menu_functions,
     close_link_mode,
     print,
-    getTranslateValues,
     public_print,
     create_new_element,
     toggle_physics,
@@ -31,13 +30,16 @@ draw_bkg();
 
 /* TODO Coisas gráficas
 melhorar texto de ajuda com imagens
+scroll to zoom (quando a visão está afastada nao mostrar o texto)
 */
 
 /* TODO Funcionalidades
-scroll to zoom (quando a visão está afastada nao mostrar o texto)
 botao para focar a imagem no centro de massa, para nao correr o risco de afastar a camara de tudo
+botão para encontrar nodo especifico
 pedir confirmação antes de limpar canvas (apagar nodos todos)
-medir quando foi feita alguma mudança à rede. Só pedir confirmação de dar load quando houver alguma mudança
+! medir quando foi feita alguma mudança à rede. Só pedir confirmação de dar load quando houver alguma mudança
+settings tab com a possibilidade de modificar os parametros da simulação fisica dinamicamente
+! No menu do nodo, deixar espaço para escrever um texto descritivo
 */
 
 /* TODO Otimizaçoes
@@ -124,7 +126,7 @@ document.addEventListener("click", (event) => {
     clearInterval(hold_timeout);
 
     // stop link mode when we click outside a node
-    if (globals.link_mode_on && !event.target.closest(".node") && !event.target.closest(".box") && !globals.dragged) {close_link_mode(); draw_bkg();};
+    if (globals.link_mode_on && !event.target.closest(".node") && !event.target.closest(".box") && !globals.dragged) close_link_mode();
 
     // if the input box was opened and we 
     // clicked neither in it nor in the button to create it, delete the input box
@@ -150,10 +152,10 @@ document.addEventListener("click", (event) => {
     }
 
     if (globals.dragged){
-        // update_nodes();
-        // Reset the movement related coords
+        // Reset the movement related vars
         globals.start_coords = [0,0];
         globals.end_coords = [0,0];
+        globals.dragged = false;
     }
 
     //after the welcome message, any help from the title text disapears after a click
@@ -162,6 +164,7 @@ document.addEventListener("click", (event) => {
 
 
     if (globals.clickingNode){
+        globals.clickingNode.mass = 1;
         globals.clickingNode = null;
     }
 
@@ -175,14 +178,6 @@ canvas.addEventListener('mousedown', function(event) {
 
         globals.start_coords = [event.clientX, event.clientY];
         globals.end_coords = [event.clientX, event.clientY];
-
-        globals.nodes.forEach((node) => {
-            node.mouseTranslation = {x:0,y:0};
-            node.initialTranslation = {x:0,y:0};
-        });
-        globals.arrows.forEach((arrow) => {
-            arrow.initialTranslation = getTranslateValues(arrow);
-        });
     }
 });
 
@@ -194,7 +189,9 @@ canvas.addEventListener('mousedown', function(event) {
 
 
 document.addEventListener('mousemove', function(event) {
-    if (!globals.clickingNode && globals.isMouseDown && !globals.box_opened) { //dragging the map, only possible when there is no opened info box and we arent clicking a node
+
+    //dragging the map, only possible when there is no opened info box and we arent clicking a node
+    if (!globals.clickingNode && globals.isMouseDown && !globals.box_opened) { 
 
         globals.end_coords = [event.clientX, event.clientY];
 
@@ -202,18 +199,6 @@ document.addEventListener('mousemove', function(event) {
         const dy = globals.end_coords[1] - globals.start_coords[1];
 
 
-        // Translate nodes and connections         
-        // This is only a visual change, it doesnt affect the actual position of the nodes
-        globals.nodes.forEach((node) => {
-            node.mouseTranslation = {x:dx, y:dy};
-
-            // const total_translation_x = node.mouseTranslation.x + node.initialTranslation.x + node.simTranslation.x
-            // const total_translation_y = node.mouseTranslation.y + node.initialTranslation.y + node.simTranslation.y
-            // node.style.transform = `translate(${total_translation_x}px, ${total_translation_y}px)`;           
-        }); 
-        // update_arrows(dx,dy);
-
-        draw_bkg(dx, dy);
         globals.dragged = true;
 
         return;
@@ -221,22 +206,10 @@ document.addEventListener('mousemove', function(event) {
 
     // If we move the mouse while clicking a node, move that node
     if (globals.clickingNode && !globals.box_opened){
-        const movingNode = globals.clickingNode;
 
         // Accumulate drag offset from initial click position
-        movingNode._dragOffsetX += event.movementX;
-        movingNode._dragOffsetY += event.movementY;
-
-        // Set node position to initial + accumulated offset
-        // movingNode.x = movingNode._dragStartX + movingNode._dragOffsetX;
-        // movingNode.y = movingNode._dragStartY + movingNode._dragOffsetY;
-
-        // movingNode.style.left = movingNode.x + 'px';
-        // movingNode.style.top = movingNode.y + 'px';
-
-
-
-        // update_arrows();
+        globals._dragOffsetX += event.movementX;
+        globals._dragOffsetY += event.movementY;
     }
 });
 
