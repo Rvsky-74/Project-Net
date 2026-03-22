@@ -11,7 +11,9 @@ html, body {
     height: 100%;
 }
 
-
+.hidden {
+    display: none !important;
+}
 
 .Default {
     --dark-color: rgb(50,0,100);
@@ -338,6 +340,8 @@ html, body {
     height: auto;
     min-height: fit-content;
 
+    align-items: center;
+
     background-color: var(--light-color);
     border: solid;
     border-width: 5px;
@@ -356,14 +360,20 @@ html, body {
     color: white;
     font-weight: bold;
 
+    border: none;
+    box-shadow:
+        0 4px 0 color-mix(in srgb, var(--dark-color) 70%, black),
+        0 6px 10px rgba(0,0,0,0.15);
+
     padding: 5px;
 }
-
-.link-button:hover {
-    outline: solid;
-    outline-width: 2px;
-    outline-color: black;
+.link-button:active{
+    transform: translateY(4px);
+    box-shadow:
+    inset 0 3px 5px rgba(0,0,0,0.2),
+    inset 0 -1px 2px rgba(255,255,255,0.6);
 }
+
 .button-text-wrapper {
     display: flex;
     /* align-items: center; Vertically align text and button */
@@ -427,6 +437,50 @@ html, body {
             mask-position: center;
         }
 
+
+.notes-container {
+    height: 100px;
+    width: 100px;
+    min-width: 100%;
+
+    background-color: color-mix(in srgb, var(--light-color) 80%, white);
+
+    padding: 5px;
+
+    border: solid var(--dark-color);
+    outline: none;
+    font-weight: bold;
+}
+
+
+/* Chrome / Edge / Brave / Safari */
+textarea::-webkit-scrollbar {
+  width: 10px;
+}
+
+textarea::-webkit-scrollbar-track {
+  background: color-mix(in srgb, var(--light-color) 80%, white);
+}
+
+textarea::-webkit-scrollbar-thumb {
+  background: var(--dark-color);
+  border-radius: 8px;
+}
+
+textarea::-webkit-scrollbar-thumb:hover {
+  cursor: pointer;
+}
+/* Hide the arrow buttons completely */
+textarea::-webkit-scrollbar-button {
+  display: none;
+  width: 0;
+  height: 0;
+}
+textarea::-webkit-resizer {
+  background:  var(--dark-color)
+}
+
+
 /*********************************************************************/
 
 
@@ -438,7 +492,7 @@ html, body {
     --diameter: 21px;
     --tx: 0;
     --ty: 0;
-    --scale: 21;
+    --alpha: 1;
 
     width: var(--diameter);
     aspect-ratio: 1;
@@ -463,7 +517,6 @@ html, body {
 
     --size: 14px;
     --margin: 2px;
-    width: fit-content;
     
     color: #444;  /* Text color */
     font-weight: bold;
@@ -482,6 +535,12 @@ html, body {
     border: none;
 
     padding: 1px 4px;
+
+    display: inline-block;  
+    max-width: calc(var(--diameter) * 4);
+    width: max-content;
+    white-space: normal;
+
 
     z-index: inherit;
 }
@@ -509,16 +568,12 @@ html, body {
     --alpha: 0.3;
 }
 #canvas-container .node.hovered {
-    --alpha: 1;
+    --alpha: 1.2;
 }
 #canvas-container .arrow.highlight {
     --alpha: 1;
 }
-/* Use stored --base-diameter for hover enlargement fallback */
-/* #canvas-container .node.hovered { */
-    /* If JS sets --diameter inline, that wins; this is a fallback */
-    /* --diameter: 205; */
-/* } */
+
 
 /*********************************************************************/
 
@@ -566,7 +621,7 @@ html, body {
     left: 0px;
     
     width: 9px;
-    height: 9px;
+    aspect-ratio: 1;
 
     transform: translate(-50%,-50%) translate(var(--tx),var(--ty)) rotate(var(--rotation));
     

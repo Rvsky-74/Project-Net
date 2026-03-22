@@ -53,20 +53,23 @@ function setupClickDelegation(){
 
         if (globals.link_mode_on){
             let is_connection_valid = origin_node != node &&
-                                      !(origin_node.connections.includes(node)) &&
-                                      !(node.connections.includes(origin_node));
-            if (is_connection_valid){
+                                      !(origin_node.connections.some(item => item.dest === node)) &&
+                                      !(node.connections.some(item => item.dest === origin_node));
+
+            // Create the connection
+            if (is_connection_valid){ 
                 if (creates_loop(origin_node, node)){
                     public_print("That would make a loop impossible to complete");
                     return;
                 }
-                origin_node.connections.push(node);
+                origin_node.connections.push({dest:node, size:1});
                 create_arrow(origin_node, node);
                 update_colors(node, node.state, node.state);
                 return;
             }
 
-            if (origin_node.connections.includes(node)){
+            // if there already was a connection, delete it 
+            if (origin_node.connections.some(item => item.dest === node)){
                 const arrowToRemove = globals.arrows.find(arrow => (arrow.parent == origin_node && arrow.child == node));
                 if (arrowToRemove){
                     arrowToRemove.remove();
@@ -79,7 +82,7 @@ function setupClickDelegation(){
                     globals.arrows = globals.arrows.filter(arrow => arrow != arrowToRemove);
                 }
 
-                let index = origin_node.connections.indexOf(node);
+                let index = origin_node.connections.findindex(item => item.dest === node);
                 if (index !== -1) origin_node.connections.splice(index, 1);
 
                 update_colors(node, node.state, node.state);
@@ -162,12 +165,11 @@ export function update_arrow_render(arrow, off_x=0, off_y=0){
     let distance = Math.sqrt(dx * dx + dy * dy);
 
 
-    // The diam of a node is 21. We could use getComputedValues() to get it but that function is slow
-    const node_radius = 10.5
+    // Get the actual radii from the nodes' current diameters
     const margin = 3
 
-    const tip_x = (child.x + node_radius - (node_radius + 3*margin) * Math.cos(angle));
-    const tip_y = (child.y + node_radius - (node_radius + 3*margin) * Math.sin(angle));
+    const tip_x = (child.x + globals.nodeRadius - (globals.nodeRadius + 3*margin) * Math.cos(angle));
+    const tip_y = (child.y + globals.nodeRadius - (globals.nodeRadius + 3*margin) * Math.sin(angle));
 
     // tip.style.transform = `translate(-50%,-50%) translate3d(${tip_x + off_x}px,${tip_y + off_y}px,0) rotate(${angle+Math.PI/4}rad)`;
     tip.style.setProperty("--tx", tip_x + off_x + 'px')
@@ -175,9 +177,9 @@ export function update_arrow_render(arrow, off_x=0, off_y=0){
     tip.style.setProperty("--rotation", angle + Math.PI/4 + 'rad')
     
     // Use scaleX with transform instead of width to avoid layout reflows
-    const lineDistance = Math.max(0, distance - 2*node_radius - 4*margin) / 100; // we use base width 100 and divide here by 100 to prevent rasterization problems
-    const line_x = (parent.x + node_radius + (node_radius + margin) * Math.cos(angle));
-    const line_y = (parent.y + node_radius + (node_radius + margin) * Math.sin(angle));   
+    const lineDistance = Math.max(0, distance - globals.nodeRadius - globals.nodeRadius - 4*margin) / 100; // we use base width 100 and divide here by 100 to prevent rasterization problems
+    const line_x = (parent.x + globals.nodeRadius + (globals.nodeRadius + margin) * Math.cos(angle));
+    const line_y = (parent.y + globals.nodeRadius + (globals.nodeRadius + margin) * Math.sin(angle));   
 
     // Also, the line has a thickness that causes a misalignement
     // To compensate, translate 1 pixel to the orthogonal direction of the line
@@ -213,7 +215,7 @@ export function update_colors(node, old_state, new_state){
             arrow.classList.replace(old_state, new_state);
 
             // how many uncompleted dependencies the node has. If it has none, it's now completable 
-            if ((arrow.parent.connections.filter(n => n.state === "Uncompleted" || n.state === "Default")).length == 0){ 
+            if ((arrow.parent.connections.filter(c => c.dest.state === "Uncompleted" || c.dest.state === "Default")).length == 0){ 
                 if (arrow.parent.state != "Completed") arrow.parent.classList.replace("undoable", "doable");
             } 
             else {
@@ -272,8 +274,8 @@ export function node_tree_search(node, visited_nodes = new Set()){
         });
     }
     //the changes in the node's state may have propagated to other layers
-    node.connections.forEach(n => {
-        if (!visited_nodes.has(n)) node_tree_search(n, visited_nodes);
+    node.connections.forEach(c => {
+        if (!visited_nodes.has(c.dest)) node_tree_search(c.dest, visited_nodes);
     });
     
 
@@ -378,7 +380,7 @@ export function add_menu_functions(add_node_button, delete_button, save_button, 
                     move_all(dx, dy);
 
                     //increase the node to highlight it and then reduce it to original size
-                    const prev_diam = parseInt(getComputedStyle(repeated_node).getPropertyValue("--diameter").slice(0,-2), 10);     
+                    const prev_diam = globals.nodeRadius;
                     repeated_node.style.setProperty("--diameter", prev_diam*1.3 + 'px');
 
                     function return_original_width(event){
@@ -591,19 +593,21 @@ export function open_options(n){
             A caixa permite:
                 entrar no modo link, que permite fazer conexões
                 mudar o estado do nodo
+                apagar nodo
+                editar nome/texto do nodo
 ***********************************************************************************************************************************/
     if (globals.simulating) toggle_physics(); // stop physics simulation 
     globals.box_opened = true;
     const [x, y] = [n.x, n.y];
 
 
-    ///////// Criar a caixa onde vão estar os botões /////////
+    // Create parent container
     const box = create_new_element("div", container, "box", ["box", n.state]);
     box.style.left = `${x}px`;
     box.style.top = `${y}px`;
 
 
-    ///////// Estrutura acima da caixa principal para os botões de eliminar e editar nodo /////////
+    ///////// Delete/Edit node buttons ///////////////
     const sub_box = create_new_element("div", container, "sub-box", ["sub-box", n.state]);
     sub_box.style.left = `${x}px`;
     sub_box.style.top = `${y}px`;
@@ -618,7 +622,6 @@ export function open_options(n){
         }}}});
     observer.observe(container, {childList: true});             
 
-    
 
     // botões acima da caixa de opções
     const delete_node_button = create_new_element("button", sub_box, null, ["button"])
@@ -656,11 +659,11 @@ export function open_options(n){
         
         // Update connections list and doable / not doable state from the parents
         parents.forEach(p => {
-            const idx = p.connections.indexOf(n)
+            const idx = p.connections.findindex(c => c.dest === n)
             p.connections.splice(idx,1) // remove 1 elemento no indice onde está o nodo (remove o nodo da lista de conecções)
             
             // How many uncompleted dependencies the node now has. If it has none, it's now completable 
-            if ((p.connections.filter(n => n.state === "Uncompleted" || n.state === "Default")).length == 0){ 
+            if ((p.connections.filter(c => c.dest.state === "Uncompleted" || c.dest.state === "Default")).length == 0){ 
                 if (p.state != "Completed") p.classList.replace("undoable", "doable");
             }
         })
@@ -670,8 +673,6 @@ export function open_options(n){
             node_tree_search(c)
         })
     });
-    
-
 
 
     const edit_node_button = create_new_element("button", sub_box, null, ["button"])
@@ -717,7 +718,8 @@ export function open_options(n){
     })
 
 
-    ////////////////// Botão para mudar estado ///////////////////
+
+    ////////////////// Toggle State buttons ///////////////////
 
     // Estrutura contendo o botão e o texto descritivo
     const first_line = create_new_element("div", box, null, ["button-text-wrapper"]);
@@ -749,7 +751,7 @@ export function open_options(n){
 
 
 
-    ////////////////// Botão para ativar modo de ligações ///////////////////
+    ////////////////// Make Connections Button ///////////////////
     const second_line = create_new_element("div", box); 
 
     const make_connections = create_new_element("button", second_line, "b1", ["link-button"]);  
@@ -766,6 +768,14 @@ export function open_options(n){
         // make it visually obvious that we are in connection mode
         canvas.classList.replace("canvas-default", "canvas-alt"); 
         public_print("Select pre-requisites for this task");
+    });
+
+
+    ////////////////// Text Area for notes ///////////////////    
+    const notes_area = create_new_element("textarea", box, null, ["notes-container"])
+    notes_area.value = (n.notes != null) ? n.notes : ""
+    notes_area.addEventListener("change", (e) => {
+        n.notes = e.target.value;
     });
 }
 
@@ -816,9 +826,9 @@ export function creates_loop(n_goal, n2, visited_nodes = new Set()) {
 
     visited_nodes.add(n2);
 
-    for (let node of n2.connections) {
-        if (!visited_nodes.has(node)) {
-            if (creates_loop(n_goal, node, visited_nodes)) {
+    for (let c of n2.connections) {
+        if (!visited_nodes.has(c.dest)) {
+            if (creates_loop(n_goal, c.dest, visited_nodes)) {
                 return true; // If a loop is found in recursion, propagate it
             }
         }
@@ -851,7 +861,7 @@ window.addEventListener("resize", () => fitTextToDiv(myDiv));
 
 
 
-export function add_node(x=null, y=null, name=null, state="Default"){
+export function add_node(x=null, y=null, name=null, state="Default", notes=""){
 /**********************************************************************************************************************************
     Recebe: 
             (x,y) -> coordenadas do novo nodo no canvas (caso sejam fornecidas; caso contrário, são aleatórias)
@@ -880,7 +890,7 @@ export function add_node(x=null, y=null, name=null, state="Default"){
     node.visualX = 0;
     node.visualY = 0;
    
-    node.connections = [];
+    node.connections = []; // form [{dest: child1, size:size1}, {dest: child2, size:size2}, ...]
 
     // Quick-access caches for incoming/outgoing arrows to avoid repeated scans
     node.incomingArrows = [];
@@ -894,6 +904,8 @@ export function add_node(x=null, y=null, name=null, state="Default"){
 
     node.mass = 1;
 
+    node.notes = notes
+
     
     container.appendChild(node);
     globals.nodes.push(node);
@@ -902,6 +914,7 @@ export function add_node(x=null, y=null, name=null, state="Default"){
     text.className = "text";
     text.textContent = name;
     node.appendChild(text);
+    adjustTextWidth(text);
 
     // assign a stable id and base diameter for CSS/JS optimizations
     node.dataset.nodeId = String(nodeIdCounter++);
@@ -974,9 +987,9 @@ export function toggle_physics(){
                     let vetor_diff = [(n1.x - n0.x)/dist, (n1.y - n0.y)/dist] //vetor de n0 para n1, normalizado
                     
                     
-                    if (n0.connections.includes(n1)){ //if the 2 nodes are related            
-                    // act like a spring that tends to a relaxation length x0
-                        const displacement = dist - x0; // quando é: negativo -> afastam-se | positivo -> atraem-se 
+                    if (n0.connections.some(c => c.dest === n1)){ //if the 2 nodes are related            
+                    // act like a spring that tends to a relaxation length x0 (x0 can be changed through the connection.size param and the global zoom)
+                        const displacement = dist - n0.connections.find(c => c.dest === n1).size * x0 * globals.zoom; // Negative -> Push away | Positive -> Pull in 
                         n0.movimento[0] += vetor_diff[0]*displacement*junction_strength;
                         n0.movimento[1] += vetor_diff[1]*displacement*junction_strength;
 
@@ -1035,12 +1048,19 @@ export function draw_bkg(){
     Retorna:
             Desenha o grid de fundo no canvas
 ***********************************************************************************************************************************/
+
+
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+    // If we are too zomed out, dont render the background
+    if (globals.zoom < 0.5) return
+
+    const crossOpacity = Math.min(0.6 * (globals.zoom - 0.5), 0.5)
+
     function drawCross(x, y){
         const cross_size = 3;
-        const color = "rgba(0,0,0,0.3)";
+        const color = `rgba(0,0,0,${crossOpacity})`;
         ctx.beginPath();
         ctx.moveTo(x-cross_size, y);
         ctx.lineTo(x+cross_size, y);
@@ -1051,7 +1071,7 @@ export function draw_bkg(){
         ctx.stroke();
     }
     if (!globals.link_mode_on){
-        const step = 20;
+        const step = 10 + globals.nodeRadius;
         let x_off = bkg_x_off;
         let y_off = bkg_y_off;
         while (x_off > step/2) x_off -= step;
@@ -1215,3 +1235,56 @@ function setupHoverDelegation(){
 setupHoverDelegation();
 
 
+
+
+
+export function adjustTextWidth(el) {
+    // Called when adding a node
+    // Adjusts the node's width to fit nicely to accommodate the longest wrapped line
+    const allLines = getAllWrappedLines(el);
+    let maxWidth = 0;
+    for (let line of allLines) {
+        const width = getTextWidth(line, el);
+        maxWidth = Math.max(maxWidth, width);
+    }
+    el.style.maxWidth = maxWidth + 10 + 'px'
+    el.style.width = Math.ceil(maxWidth) + 10 + 'px';
+}
+
+function getAllWrappedLines(element) {
+    // Get all lines of a text box (splits at each wrap point)
+    const text = element.textContent;
+    const lines = [];
+    const range = document.createRange();
+    let lastTop = null;
+    let lastLineStart = 0;
+
+    for (let i = 1; i <= text.length; i++) {
+        range.setStart(element.firstChild, 0);
+        range.setEnd(element.firstChild, i);
+        const rects = range.getClientRects();
+        if (!rects.length) continue;
+
+        const top = rects[rects.length - 1].top;
+        if (lastTop !== null && top > lastTop) {
+            // wrap detected
+            lines.push(text.slice(lastLineStart, i - 1));
+            lastLineStart = i - 1;
+        }
+        lastTop = top;
+    }
+
+    // Add the last line
+    lines.push(text.slice(lastLineStart));
+    return lines;
+}
+
+function getTextWidth(text, element) {
+    const style = getComputedStyle(element);
+    const context = canvas.getContext('2d');
+    
+    // Use the same font as the input
+    context.font = `${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
+    
+    return context.measureText(text).width;
+}

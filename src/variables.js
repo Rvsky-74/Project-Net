@@ -17,11 +17,14 @@ export const globals = {
     _dragOffsetX: 0,
     _dragOffsetY: 0,
 
+    zoom: 1,
+    nodeRadius: 10.5,
+
 
     start_coords: [0,0],
     end_coords: [0,0],
 
-    box_opened: false, // when a details box is opened, disable dragging the screen
+    box_opened: false, // When a details box is opened, disable dragging the screen
 
     current_save_file: ""
 };

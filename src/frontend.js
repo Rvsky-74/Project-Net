@@ -63,14 +63,15 @@ export async function saveNodeData(slot_number, slot_name) {
   
   globals.nodes.forEach((n) => {
     const conn = n.connections || [];
-    const connection_list = conn.map(c => c.name);
+    const connection_list = conn.map(c => ({dest:c.dest.name, size:c.size}));
     
     node_save_list.push({
       name: n.name, 
       x: n.getBoundingClientRect().left, 
       y: n.getBoundingClientRect().top, 
       state: n.state, 
-      connections: connection_list
+      connections: connection_list,
+      notes: n.notes
     });
   });
   
@@ -140,7 +141,7 @@ onAuthStateChanged(auth, (user) => {
     
     delete_all();
   }   
-  load(1)
+  // load(1)
 });   
 
 
@@ -163,17 +164,35 @@ export async function load(saveSlot){
 
       // Recreate nodes from stored data
       node_info.forEach(n_info => {
-        add_node(n_info.x, n_info.y, n_info.name, n_info.state);
+        const notes = (n_info.notes != null) ? n_info.notes : ""
+        add_node(n_info.x, n_info.y, n_info.name, n_info.state, notes);
       });
+
+
       // Now that all nodes are present, we can assign their connnections
-      node_info.forEach(n_info => {
-        const parent = globals.nodes.find(n => n.name === n_info.name); 
-        n_info.connections.forEach(name =>{
-          const child = globals.nodes.find(n => n.name === name); 
-          create_arrow(parent, child);
-          parent.connections.push(child);
-        }); 
-      });
+      // Since we updated how the saved data looks like for connections, we need to check if we are loading an old file or a recent file
+      const first_conection = node_info[0].connections[0]
+      if (typeof first_conection === "string"){ // the save file is in the old format
+        node_info.forEach(n_info => {
+          const parent = globals.nodes.find(n => n.name === n_info.name); 
+          n_info.connections.forEach(name =>{
+            const child = globals.nodes.find(n => n.name === name); 
+            create_arrow(parent, child);
+            parent.connections.push({dest:child, size:1});
+          }); 
+        });  
+      }
+      else{ // the save file is in the new format
+        node_info.forEach(n_info => {
+          const parent = globals.nodes.find(n => n.name === n_info.name); 
+          n_info.connections.forEach(item =>{
+            const child = globals.nodes.find(n => n.name === item.dest); 
+            create_arrow(parent, child);
+            parent.connections.push({dest:child, size:item.size});
+          }); 
+        });
+      }
+
       globals.nodes.forEach(n => update_colors(n, n.state, n.state));
 
       text.innerText = globals.current_save_file;
